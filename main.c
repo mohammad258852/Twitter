@@ -10,6 +10,7 @@ int main(){
     initscr();
     cbreak();
     noecho();
+    curs_set(FALSE);
     keypad(stdscr,TRUE);
     //end of init
 

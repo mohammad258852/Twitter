@@ -8,5 +8,7 @@
 #define PORT 12345
 
 char auth[MAX];
+char username[MAX];
+char password[MAX];
 
 #endif

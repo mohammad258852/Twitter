@@ -25,7 +25,7 @@ Tweet make_tweet_json(cJSON* json){
     tmp.comment_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"comments"));
     tmp.comments = (Comment*)calloc(tmp.comment_number,sizeof(Comment));
     int i=0;
-    for(cJSON *elm = cJSON_GetObjectItem(json,"comments")->child;i<tmp.comment_number;i++){
+    for(cJSON *elm = cJSON_GetObjectItem(json,"comments")->child;i<tmp.comment_number&&elm!=NULL;i++,elm=elm->next){
         tmp.comments[i] = make_comment_json(elm);
     }
     return tmp;
@@ -46,8 +46,41 @@ Tweet* make_tweet_array_json(cJSON* json){
 void print_tweet(Tweet tweet){
     printw("author:%s \t\t id:%d\n",tweet.author,tweet.id);
     printw("%s\n",tweet.content);
-    printw("Likes:%d \t Comments:%d\n",tweet.likes,tweet.comment_number);
+    printw("Likes:%d      Comments:%d\n",tweet.likes,tweet.comment_number);
     printw("\n\n");
+}
+
+void wprint_tweet(WINDOW* win,Tweet tweet){
+    wclear(win);
+    mvwprintw(win,0,0,"author:%s",tweet.author,tweet.id);
+    mvwprintw(win,1,0,"%s",tweet.content);
+    mvwprintw(win,2,0,"Likes:%d      Comments:%d\n",tweet.likes,tweet.comment_number);
+    wrefresh(win);
+}
+
+void add_comment(Tweet* tweet,Comment comment){
+    Comment* tmp = (Comment*)calloc(tweet->comment_number+1 , sizeof(Comment));
+    for(int i=0;i<tweet->comment_number;i++){
+        tmp[i] = tweet->comments[i];
+    }
+    tmp[tweet->comment_number] = comment;
+    free(tweet->comments);
+    tweet->comments = tmp;
+    tweet->comment_number++;
+}
+
+void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
+    wclear(win);
+    if(tweet->comment_number==0){
+        mvwprintw(win,1,3,"No Comments:(");
+    }
+    else{
+        Comment comment = tweet->comments[number];
+        mvwprintw(win,0,0,"%d",number+1);
+        mvwprintw(win,1,0,"author:%s",comment.author);
+        mvwprintw(win,2,0,"%s",comment.content);
+    }
+    wrefresh(win);
 }
 
 #endif

@@ -13,7 +13,10 @@ struct __comment
 }Comment;
 
 Comment make_comment_json(cJSON* json){
-    
+    Comment tmp;
+    strcpy(tmp.author,json->string);
+    strcpy(tmp.content,json->valuestring);
+    return tmp;
 }
 
 #endif

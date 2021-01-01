@@ -434,7 +434,111 @@ void unfollow(User* user){
 }
 //TODO
 void tweet_profile_menu(){
+    char request[3*MAX];
+    char response[3*MAX];
+    sprintf(request,"profile %s\n",auth);
+    send_request(request,strlen(request),response);
+    cJSON* json = cJSON_Parse(response);
+    char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
+    /*if(strcmp(type,"Profile")!=0){
+        mvprintw(LINES/2,4,"This user doesn't exixt ):");
+        press_key_to_continue();
+        return;
+    }*/
+    clear();
+    int help_y = LINES - 3;
+    mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
+    mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
+    refresh();
+    User user = make_user_json(cJSON_GetObjectItem(json,"message"));
+    
+    int user_win_x = 0,
+        user_win_y = 0;
+    int user_win_h = 6,
+        user_win_w = COLS;
+    WINDOW* user_win = newwin(user_win_h,user_win_w,user_win_y,user_win_x);
+    box(user_win,0,0);
+    WINDOW* user_subwin = derwin(user_win,user_win_h-2,user_win_w-2,1,1);
+    wrefresh(user_win);
+
+    int tweet_win_x = 0,
+        tweet_win_y = user_win_y + user_win_h;
+    int tweet_win_h = 5,
+        tweet_win_w = COLS;
+    WINDOW* tweet_win = newwin(tweet_win_h,tweet_win_w,tweet_win_y,tweet_win_x);
+    keypad(tweet_win,TRUE);
+    box(tweet_win,0,0);
+    WINDOW* tweet_subwin = derwin(tweet_win,tweet_win_h-2,tweet_win_w-2,1,1);
+    wrefresh(tweet_win);
+
+    int comment_win_x = 0,
+        comment_win_y = tweet_win_y + tweet_win_h;
+    int comment_win_h = 5,
+        comment_win_w = COLS;
+    WINDOW* comment_win = newwin(comment_win_h,comment_win_w,comment_win_y,comment_win_x);
+    keypad(comment_win,TRUE);
+    box(comment_win,0,0);
+    WINDOW* comment_subwin = derwin(comment_win,comment_win_h-2,comment_win_w-2,1,1);
+    wrefresh(comment_win);
+
+    int current_tweet = 0;
+    int current_comment = 0;
+    int continue_running = 1;
+    int tweet_change = 0;
+    int user_change = 0;
+    int comment_change = 0;
+    wprint_user(user_subwin,user,0);
+    wprint_tweet(tweet_subwin,user.tweets+current_tweet);
+    wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
+    int ch;
+    while(continue_running && (ch=wgetch(tweet_win))){
+        switch (ch)
+        {
+        case KEY_LEFT:
+            if(current_tweet-1>=0){
+                tweet_change = 1;
+                comment_change = 1;
+                current_tweet--;
+            }
+            break;
+        case KEY_RIGHT:
+            if(current_tweet+1<user.tweets_number){
+                tweet_change = 1;
+                comment_change = 1;
+                current_tweet++;
+            }
+            break;
+        case KEY_UP:
+            if(current_comment-1>=0){
+                comment_change = 1;
+                current_comment--;
+            }
+            break;
+        case KEY_DOWN:
+            if(user.tweets+current_tweet!=NULL && current_comment+1<user.tweets[current_tweet].comment_number){
+                current_comment++;
+                comment_change = 1;
+            }
+            break;
+        case 'q':
+            continue_running = 0;
+            break;
+        }
+        if(user_change){
+            user_change = 0;
+            wprint_user(user_subwin,user,0);
+        }
+        if(tweet_change){
+            tweet_change = 0;
+            current_comment = 0;
+            wprint_tweet(tweet_subwin,user.tweets+current_tweet);
+        }
+        if(comment_change){
+            comment_change = 0;
+            wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
+        }
+    }
 }
 //TODO
 void personal_area_menu(){

@@ -23,15 +23,23 @@ Tweet make_tweet_json(cJSON* json){
     tmp.content = cJSON_GetObjectItem(json,"content")->valuestring;
     tmp.likes = cJSON_GetObjectItem(json,"likes")->valueint;
     tmp.comment_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"comments"));
-    tmp.comments = (Comment*)calloc(tmp.comment_number,sizeof(Comment));
-    int i=0;
-    for(cJSON *elm = cJSON_GetObjectItem(json,"comments")->child;i<tmp.comment_number&&elm!=NULL;i++,elm=elm->next){
-        tmp.comments[i] = make_comment_json(elm);
+    if(tmp.comment_number>0){
+        tmp.comments = (Comment*)calloc(tmp.comment_number,sizeof(Comment));
+        int i=0;
+        for(cJSON *elm = cJSON_GetObjectItem(json,"comments")->child;i<tmp.comment_number&&elm!=NULL;i++,elm=elm->next){
+            tmp.comments[i] = make_comment_json(elm);
+        }
+    }
+    else{
+        tmp.comments = NULL;
     }
     return tmp;
 }
 
 Tweet* make_tweet_array_json(cJSON* json){
+    if(cJSON_GetArraySize(json)==0){
+        return NULL;
+    }
     Tweet* tweets = (Tweet*)calloc(cJSON_GetArraySize(json),sizeof(Tweet));
     int i = 0;
     for(cJSON* json_cur_tweet=json->child;
@@ -50,11 +58,16 @@ void print_tweet(Tweet tweet){
     printw("\n\n");
 }
 
-void wprint_tweet(WINDOW* win,Tweet tweet){
+void wprint_tweet(WINDOW* win,Tweet* tweet){
     wclear(win);
-    mvwprintw(win,0,0,"author:%s",tweet.author,tweet.id);
-    mvwprintw(win,1,0,"%s",tweet.content);
-    mvwprintw(win,2,0,"Likes:%d      Comments:%d\n",tweet.likes,tweet.comment_number);
+    if(tweet==NULL){
+        mvwprintw(win,1,4,"No tweet :(");
+    }
+    else{
+        mvwprintw(win,0,0,"author:%s",tweet->author,tweet->id);
+        mvwprintw(win,1,0,"%s",tweet->content);
+        mvwprintw(win,2,0,"Likes:%d      Comments:%d\n",tweet->likes,tweet->comment_number);
+    }
     wrefresh(win);
 }
 
@@ -71,12 +84,12 @@ void add_comment(Tweet* tweet,Comment comment){
 
 void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
     wclear(win);
-    if(tweet->comment_number==0){
+    if(tweet==NULL || tweet->comment_number==0){
         mvwprintw(win,1,3,"No Comments:(");
     }
     else{
         Comment comment = tweet->comments[number];
-        mvwprintw(win,0,0,"%d",number+1);
+        mvwprintw(win,0,0,"comment %d",number+1);
         mvwprintw(win,1,0,"author:%s",comment.author);
         mvwprintw(win,2,0,"%s",comment.content);
     }

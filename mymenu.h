@@ -12,6 +12,7 @@
 #include"cJSON.h"
 #include"tweet.h"
 #include"comment.h"
+#include"user.h"
 
 void start_menu();
 void signup_menu();
@@ -24,12 +25,14 @@ void press_key_to_continue();
 char* itos(int d);
 void like_tweet(Tweet* tweet);
 void comment_tweet(WINDOW* win,Tweet* tweet);
+void refresh_tweet();
+void unfollow(User* user);
+void follow(User* user);
 
 //TODO
 void search_menu();
 void tweet_profile_menu();
 void personal_area_menu();
-void refresh_tweet();
 //TODO
 
 
@@ -286,9 +289,148 @@ void timeline_menu(){
     free(my_items);
 }
 
-//TODO
-void search_menu(){
 
+void search_menu(){
+    char username_search[MAX];
+    clear();
+    mvprintw(0,0,"Search User");
+    mvprintw(1,0,"Type the username");
+    move(2,0);
+    curs_set(TRUE);
+    echo();
+    scanw("%s",username_search);
+    noecho();
+    curs_set(FALSE);
+    char request[3*MAX];
+    char response[3*MAX];
+    sprintf(request,"search %s,%s\n",auth,username_search);
+    send_request(request,strlen(request),response);
+    cJSON* json = cJSON_Parse(response);
+    char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
+
+    if(strcmp(type,"Profile")!=0){
+        mvprintw(LINES/2,4,"This user doesn't exixt ):");
+        press_key_to_continue();
+        return;
+    }
+    clear();
+    int help_y = LINES - 4;
+    mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
+    mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
+    mvprintw(help_y+2,0,"press u to unfollow,f to follow, and q to quit");
+    refresh();
+    User user = make_user_json(cJSON_GetObjectItem(json,"message"));
+    
+    int user_win_x = 0,
+        user_win_y = 0;
+    int user_win_h = 6,
+        user_win_w = COLS;
+    WINDOW* user_win = newwin(user_win_h,user_win_w,user_win_y,user_win_x);
+    box(user_win,0,0);
+    WINDOW* user_subwin = derwin(user_win,user_win_h-2,user_win_w-2,1,1);
+    wrefresh(user_win);
+
+    int tweet_win_x = 0,
+        tweet_win_y = user_win_y + user_win_h;
+    int tweet_win_h = 5,
+        tweet_win_w = COLS;
+    WINDOW* tweet_win = newwin(tweet_win_h,tweet_win_w,tweet_win_y,tweet_win_x);
+    keypad(tweet_win,TRUE);
+    box(tweet_win,0,0);
+    WINDOW* tweet_subwin = derwin(tweet_win,tweet_win_h-2,tweet_win_w-2,1,1);
+    wrefresh(tweet_win);
+
+    int comment_win_x = 0,
+        comment_win_y = tweet_win_y + tweet_win_h;
+    int comment_win_h = 5,
+        comment_win_w = COLS;
+    WINDOW* comment_win = newwin(comment_win_h,comment_win_w,comment_win_y,comment_win_x);
+    keypad(comment_win,TRUE);
+    box(comment_win,0,0);
+    WINDOW* comment_subwin = derwin(comment_win,comment_win_h-2,comment_win_w-2,1,1);
+    wrefresh(comment_win);
+
+    int current_tweet = 0;
+    int current_comment = 0;
+    int continue_running = 1;
+    int tweet_change = 0;
+    int user_change = 0;
+    int comment_change = 0;
+    wprint_user(user_subwin,user,1);
+    wprint_tweet(tweet_subwin,user.tweets+current_tweet);
+    wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
+    int ch;
+    while(continue_running && (ch=wgetch(tweet_win))){
+        switch (ch)
+        {
+        case KEY_LEFT:
+            if(current_tweet-1>=0){
+                tweet_change = 1;
+                comment_change = 1;
+                current_tweet--;
+            }
+            break;
+        case KEY_RIGHT:
+            if(current_tweet+1<user.tweets_number){
+                tweet_change = 1;
+                comment_change = 1;
+                current_tweet++;
+            }
+            break;
+        case KEY_UP:
+            if(current_comment-1>=0){
+                comment_change = 1;
+                current_comment--;
+            }
+            break;
+        case KEY_DOWN:
+            if(user.tweets+current_tweet!=NULL && current_comment+1<user.tweets[current_tweet].comment_number){
+                current_comment++;
+                comment_change = 1;
+            }
+            break;
+        case 'f':
+            follow(&user);
+            user_change = 1;
+            break;
+        case 'u':
+            unfollow(&user);
+            user_change = 1;
+            break;
+        case 'q':
+            continue_running = 0;
+            break;
+        }
+        if(user_change){
+            user_change = 0;
+            wprint_user(user_subwin,user,1);
+        }
+        if(tweet_change){
+            tweet_change = 0;
+            current_comment = 0;
+            wprint_tweet(tweet_subwin,user.tweets+current_tweet);
+        }
+        if(comment_change){
+            comment_change = 0;
+            wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
+        }
+    }
+}
+
+void follow(User* user){
+    char request[3*MAX];
+    char response[3*MAX];
+    sprintf(request,"follow %s,%s\n",auth,user->username);
+    send_request(request,strlen(request),response);
+    user->following_status = 1;
+}
+
+void unfollow(User* user){
+    char request[3*MAX];
+    char response[3*MAX];
+    sprintf(request,"unfollow %s,%s\n",auth,user->username);
+    send_request(request,strlen(request),response);
+    user->following_status = 0;
 }
 //TODO
 void tweet_profile_menu(){
@@ -427,17 +569,13 @@ void refresh_tweet(){
     post_menu(tweets_id_menu);
     wrefresh(tweets_id_win);
 
-    Comment tmp_comment;
-    strcpy(tmp_comment.author, "This tweet has no comment!!");
-    strcpy(tmp_comment.content,"");
-
     int current_tweet = 0;
     int current_comment = 0;
     int tweet_change = 0;
     int comment_change = 0;
     int continue_runnig = 1;
     refresh();
-    wprint_tweet(tweet_subwin,tweets[current_tweet]);
+    wprint_tweet(tweet_subwin,tweets+current_tweet);
     wprint_comment( comment_subwin,&tweets[current_tweet],current_comment);
     int ch=1;
     while(continue_runnig && (ch=wgetch(tweets_id_win))){
@@ -483,7 +621,7 @@ void refresh_tweet(){
         if(tweet_change==1){
             tweet_change = 0;
             current_tweet = item_index(current_item(tweets_id_menu));
-            wprint_tweet(tweet_subwin,tweets[current_tweet]);
+            wprint_tweet(tweet_subwin,tweets+current_tweet);
         }
         if(comment_change){
             comment_change = 0;

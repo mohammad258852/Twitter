@@ -28,6 +28,9 @@ void comment_tweet(WINDOW* win,Tweet* tweet);
 void refresh_tweet();
 void unfollow(User* user);
 void follow(User* user);
+void change_password_menu();
+void set_bio_menu();
+
 
 //TODO
 void search_menu();
@@ -441,15 +444,16 @@ void tweet_profile_menu(){
     cJSON* json = cJSON_Parse(response);
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
-    /*if(strcmp(type,"Profile")!=0){
+    if(strcmp(type,"Profile")!=0){
         mvprintw(LINES/2,4,"This user doesn't exixt ):");
         press_key_to_continue();
         return;
-    }*/
+    }
     clear();
-    int help_y = LINES - 3;
+    int help_y = LINES - 4;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
+    mvprintw(help_y+2,0,"press q to quit");
     refresh();
     User user = make_user_json(cJSON_GetObjectItem(json,"message"));
     
@@ -542,7 +546,98 @@ void tweet_profile_menu(){
 }
 //TODO
 void personal_area_menu(){
+    const char* choises[] = {
+        "set bio",
+        "change password",
+        "back"
+    };
+    ITEM** my_items = (ITEM**)calloc(ARRAY_SIZE(choises)+1,sizeof(ITEM*));
+    for(int i=0;i<ARRAY_SIZE(choises);i++){
+        my_items[i] = new_item(choises[i],"");
+    }
+    MENU* my_menu = new_menu(my_items);
 
+    int repeat = 1;
+    while(repeat){
+        clear();
+        post_menu(my_menu);
+        mvprintw(LINES-2,0,"Use Arow key to move and Use Enter to Select");
+        refresh();
+        int ch;
+        int choise = -1;
+        while(choise==-1 && (ch=getch())){
+            switch (ch)
+            {
+            case KEY_DOWN:
+                menu_driver(my_menu,REQ_DOWN_ITEM);
+                break;
+            case KEY_UP:
+                menu_driver(my_menu,REQ_UP_ITEM);
+                break;
+            case 10:
+                choise = item_index(current_item(my_menu));
+                break;
+            }
+        }
+        unpost_menu(my_menu);
+        switch (choise)
+        {
+        case 0:
+            set_bio_menu();
+            break;
+        case 1:
+            change_password_menu();
+            break;
+        case 2:
+        default:
+            repeat = 0;
+            break;
+        }
+    }
+}
+
+void set_bio_menu(){
+    char bio[MAX];
+    mvprintw(0,0,"Setting bio");
+    mvprintw(1,0,"Enter bio:");
+    move(2,0);
+    curs_set(1);
+    echo();
+    getstr(bio);
+    noecho();
+    curs_set(0);
+
+    char request[3*MAX];
+    char response[3*MAX];
+    sprintf(request,"set bio %s,%s\n",auth,bio);
+    send_request(request,strlen(request),response);
+    cJSON* json = cJSON_Parse(response);
+    move(3,0);
+    printw("%s",cJSON_GetObjectItem(json,"message")->valuestring);
+    move(4,0);
+    press_key_to_continue();
+}
+
+void change_password_menu(){
+    char new_password[MAX];
+    char curr_password[MAX];
+
+    mvprintw(0,0,"Changing password");
+    mvprintw(1,0,"Enter current password:");
+    move(2,0);
+    scanw("%s",curr_password);
+    mvprintw(3,0,"Enter new password:");
+    move(4,0);
+    scanw("%s",new_password);
+
+    char request[4*MAX];
+    char response[4*MAX];
+    sprintf(request,"change password %s,%s,%s\n",auth,curr_password,new_password);
+    send_request(request,strlen(request),response);
+    cJSON* json = cJSON_Parse(response);
+    mvprintw(5,0,cJSON_GetObjectItem(json,"message")->valuestring);
+    move(6,0);
+    press_key_to_continue();
 }
 
 void logout(){

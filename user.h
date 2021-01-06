@@ -40,4 +40,11 @@ void wprint_user(WINDOW* win,User user,int follow_status){
     wrefresh(win);
 }
 
+void free_user(User user){
+    for(int i=0;i<user.tweets_number;i++){
+        free_tweet(user.tweets[i]);
+    }
+    free(user.tweets);
+}
+
 #endif

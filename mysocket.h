@@ -40,6 +40,7 @@ void send_request(const char request[],size_t request_size,char* respons){
     if(server_socket == 0){
         printf("\nError while making socket\n");
         strcpy(respons,"ERROR");
+        exit(1);
         return;
     }
 

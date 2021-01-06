@@ -9,8 +9,8 @@ typedef
 struct __tweet
 {
     int id;
-    char *author;
-    char *content;
+    char author[MAX];
+    char content[MAX];
     Comment *comments;
     int likes;
     int comment_number;
@@ -19,8 +19,8 @@ struct __tweet
 Tweet make_tweet_json(cJSON* json){
     Tweet tmp;
     tmp.id = cJSON_GetObjectItem(json,"id")->valueint;
-    tmp.author = cJSON_GetObjectItem(json,"author")->valuestring;
-    tmp.content = cJSON_GetObjectItem(json,"content")->valuestring;
+    strcpy(tmp.author,cJSON_GetObjectItem(json,"author")->valuestring);
+    strcpy(tmp.content,cJSON_GetObjectItem(json,"content")->valuestring);
     tmp.likes = cJSON_GetObjectItem(json,"likes")->valueint;
     tmp.comment_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"comments"));
     if(tmp.comment_number>0){
@@ -61,7 +61,9 @@ void print_tweet(Tweet tweet){
 void wprint_tweet(WINDOW* win,Tweet* tweet){
     wclear(win);
     if(tweet==NULL){
+        wattron(win,COLOR_PAIR(1));
         mvwprintw(win,1,4,"No tweet :(");
+        wattroff(win,COLOR_PAIR(1));
     }
     else{
         mvwprintw(win,0,0,"author:%s",tweet->author,tweet->id);
@@ -85,7 +87,9 @@ void add_comment(Tweet* tweet,Comment comment){
 void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
     wclear(win);
     if(tweet==NULL || tweet->comment_number==0){
-        mvwprintw(win,1,3,"No Comments:(");
+        wattron(win,COLOR_PAIR(1));
+        mvwprintw(win,1,3,"No Comments :(");
+        wattroff(win,COLOR_PAIR(1));
     }
     else{
         Comment comment = tweet->comments[number];
@@ -94,6 +98,13 @@ void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
         mvwprintw(win,2,0,"%s",comment.content);
     }
     wrefresh(win);
+}
+
+void free_tweet(Tweet tweet){
+    /*for(int i=0;i<tweet->comment_number;i++){
+        free_comment(tweet->comments[i]);
+    }*/
+    free(tweet.comments);
 }
 
 #endif

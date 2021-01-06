@@ -30,13 +30,9 @@ void unfollow(User* user);
 void follow(User* user);
 void change_password_menu();
 void set_bio_menu();
-
-
-//TODO
 void search_menu();
 void tweet_profile_menu();
 void personal_area_menu();
-//TODO
 
 
 
@@ -103,11 +99,14 @@ void start_menu(){
 void signup_menu(){
     char username[MAX];
     char password[MAX];
-
-    printw("Welcome To Sing up Page:\n");
+    attron(COLOR_PAIR(2));
+    printw("Sing up Page\n");
+    attroff(COLOR_PAIR(2));
     printw("Enter Your Username:\n");
     echo();
+    curs_set(TRUE);
     scanw("%s",username);
+    curs_set(FALSE);
     noecho();
     printw("Enter Your Password:\n");
     scanw("%s",password);
@@ -126,19 +125,25 @@ void signup_menu(){
         login_menu();
     }
     else{
+        attron(COLOR_PAIR(1));
         printw("Error: %s\n",message);
+        attroff(COLOR_PAIR(1));
         press_key_to_continue();
-        return;
     }
+    cJSON_Delete(json);
 }
 
 void login_menu(){
     clear();
-    printw("Welcome To Login Page:\n");
+    attron(COLOR_PAIR(2));
+    printw("Login Page\n");
+    attroff(COLOR_PAIR(2));
     printw("Enter Your Username:\n");
     echo();
+    curs_set(TRUE);
     scanw("%s",username);
     noecho();
+    curs_set(FALSE);
     printw("Enter Your Password:\n");
     scanw("%s",password);
 
@@ -158,10 +163,12 @@ void login_menu(){
         main_menu();
     }
     else{
+        attron(COLOR_PAIR(1));
         printw("Error: %s\n",message);
+        attroff(COLOR_PAIR(1));
         press_key_to_continue();
-        return;
     }
+    cJSON_Delete(json);
 }
 
 void main_menu(){
@@ -296,7 +303,9 @@ void timeline_menu(){
 void search_menu(){
     char username_search[MAX];
     clear();
+    attron(COLOR_PAIR(2));
     mvprintw(0,0,"Search User");
+    attroff(COLOR_PAIR(2));
     mvprintw(1,0,"Type the username");
     move(2,0);
     curs_set(TRUE);
@@ -312,8 +321,12 @@ void search_menu(){
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
+        attron(COLOR_PAIR(1));
         mvprintw(LINES/2,4,"This user doesn't exixt ):");
+        attroff(COLOR_PAIR(1));
+        move(LINES/2+1,4);
         press_key_to_continue();
+        cJSON_Delete(json);
         return;
     }
     clear();
@@ -418,6 +431,14 @@ void search_menu(){
             wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
         }
     }
+    cJSON_Delete(json);
+    delwin(user_subwin);
+    delwin(user_win);
+    delwin(tweet_subwin);
+    delwin(tweet_win);
+    delwin(comment_subwin);
+    delwin(comment_win);
+    free_user(user);
 }
 
 void follow(User* user){
@@ -445,12 +466,15 @@ void tweet_profile_menu(){
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
+        attron(COLOR_PAIR(1));
         mvprintw(LINES/2,4,"This user doesn't exixt ):");
+        attroff(COLOR_PAIR(1));
         press_key_to_continue();
+        cJSON_Delete(json);
         return;
     }
     clear();
-    int help_y = LINES - 4;
+    int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
     mvprintw(help_y+2,0,"press q to quit");
@@ -543,6 +567,14 @@ void tweet_profile_menu(){
             wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
         }
     }
+    cJSON_Delete(json);
+    free_user(user);
+    delwin(user_subwin);
+    delwin(user_win);
+    delwin(tweet_subwin);
+    delwin(tweet_win);
+    delwin(comment_subwin);
+    delwin(comment_win);
 }
 //TODO
 void personal_area_menu(){
@@ -551,8 +583,9 @@ void personal_area_menu(){
         "change password",
         "back"
     };
-    ITEM** my_items = (ITEM**)calloc(ARRAY_SIZE(choises)+1,sizeof(ITEM*));
-    for(int i=0;i<ARRAY_SIZE(choises);i++){
+    int number_choices = ARRAY_SIZE(choises);
+    ITEM** my_items = (ITEM**)calloc(number_choices+1,sizeof(ITEM*));
+    for(int i=0;i<number_choices;i++){
         my_items[i] = new_item(choises[i],"");
     }
     MENU* my_menu = new_menu(my_items);
@@ -594,11 +627,18 @@ void personal_area_menu(){
             break;
         }
     }
+    for(int i=0;i<number_choices;i++){
+        free_item(my_items[i]);
+    }
+    free_menu(my_menu);
+    free(my_items);
 }
 
 void set_bio_menu(){
     char bio[MAX];
+    attron(COLOR_PAIR(2));
     mvprintw(0,0,"Setting bio");
+    attroff(COLOR_PAIR(2));
     mvprintw(1,0,"Enter bio:");
     move(2,0);
     curs_set(1);
@@ -612,17 +652,26 @@ void set_bio_menu(){
     sprintf(request,"set bio %s,%s\n",auth,bio);
     send_request(request,strlen(request),response);
     cJSON* json = cJSON_Parse(response);
+    char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     move(3,0);
+    if(strcmp(type,"Error")==0){
+        attron(COLOR_PAIR(1));
+    }
     printw("%s",cJSON_GetObjectItem(json,"message")->valuestring);
+    if(strcmp(type,"Error")==0){
+        attroff(COLOR_PAIR(1));
+    }
     move(4,0);
     press_key_to_continue();
+    cJSON_Delete(json);
 }
 
 void change_password_menu(){
     char new_password[MAX];
     char curr_password[MAX];
-
+    attron(COLOR_PAIR(2));
     mvprintw(0,0,"Changing password");
+    attroff(COLOR_PAIR(2));
     mvprintw(1,0,"Enter current password:");
     move(2,0);
     scanw("%s",curr_password);
@@ -635,9 +684,17 @@ void change_password_menu(){
     sprintf(request,"change password %s,%s,%s\n",auth,curr_password,new_password);
     send_request(request,strlen(request),response);
     cJSON* json = cJSON_Parse(response);
+    char* type = cJSON_GetObjectItem(json,"type")->valuestring;
+    if(strcmp(type,"Error")==0){
+        attron(COLOR_PAIR(1));
+    }
     mvprintw(5,0,cJSON_GetObjectItem(json,"message")->valuestring);
+    if(strcmp(type,"Error")==0){
+        attroff(COLOR_PAIR(1));
+    }
     move(6,0);
     press_key_to_continue();
+    cJSON_Delete(json);
 }
 
 void logout(){
@@ -649,6 +706,29 @@ void logout(){
     clear();
 
     printw("Loged out\n");
+    press_key_to_continue();
+}
+
+
+void send_tweet(){
+    char tweet[MAX];
+    
+    clear();
+    attron(COLOR_PAIR(2));
+    printw("Send Tweet\n");
+    attroff(COLOR_PAIR(2));
+    printw("Type your tweet:\n");
+    echo();
+    curs_set(TRUE);
+    getstr(tweet);
+    curs_set(FALSE);
+    noecho();
+
+    char request[3*MAX];
+    char respons[3*MAX];
+    sprintf(request,"send tweet %s,%s\n",auth,tweet);
+    send_request(request,strlen(request),respons);
+    printw("tweet sent\n");
     press_key_to_continue();
 }
 
@@ -665,24 +745,6 @@ void logout(){
 */
 
 
-void send_tweet(){
-    char tweet[MAX];
-    
-    clear();
-    printw("Sending a Tweet:\n");
-    printw("Type your tweet:\n");
-    echo();
-    getstr(tweet);
-    noecho();
-
-    char request[3*MAX];
-    char respons[3*MAX];
-    sprintf(request,"send tweet %s,%s\n",auth,tweet);
-    send_request(request,strlen(request),respons);
-    printw("tweet sent\n");
-    press_key_to_continue();
-}
-
 void refresh_tweet(){
     char request[2*MAX];
     char response[2*MAX];
@@ -693,19 +755,26 @@ void refresh_tweet(){
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
 
     if(strcmp(type,"List")!=0){
+        attron(COLOR_PAIR(1));
         printw("Error accured\n");
+        attroff(COLOR_PAIR(1));
         press_key_to_continue();
+        cJSON_Delete(json);
         return;
     }
     cJSON* json_tweets = cJSON_GetObjectItem(json,"message");
     int tweets_number = cJSON_GetArraySize(json_tweets);
     Tweet* tweets = make_tweet_array_json(json_tweets);
+    cJSON_Delete(json);
     clear();
 
     if(tweets_number<1){
-        mvprintw(LINES/2 ,4,"NO new tweets :)..");
+        attron(COLOR_PAIR(1));
+        mvprintw(LINES/2 ,4,"NO new tweets :(");
+        attroff(COLOR_PAIR(1));
         move(LINES/2+1,4);
         press_key_to_continue();
+        free(tweets);
         return;
     }
 
@@ -732,10 +801,14 @@ void refresh_tweet(){
     comment_win_w = COLS;
 
 
-    mvprintw(LINES-2,0,"I can help you here");
+    int help_y = LINES - 4;
+    mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
+    mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
+    mvprintw(help_y+2,0,"press l to like,c to comment, and q to quit");
     refresh();
     WINDOW* tweets_id_win = newwin( tweets_id_win_h,tweets_id_win_w,
                                     tweets_id_win_y,tweets_id_win_x);
+    WINDOW* tweets_id_subwin = derwin(tweets_id_win,tweets_id_win_h-2,tweets_id_win_w-2,1,1);
     keypad(tweets_id_win,TRUE);
     box(tweets_id_win,0,0);
     wrefresh(tweets_id_win);
@@ -763,7 +836,7 @@ void refresh_tweet(){
     MENU* tweets_id_menu = new_menu(tweets_id_items);
     menu_opts_off(tweets_id_menu, O_SHOWDESC);
     set_menu_win(tweets_id_menu,tweets_id_win);
-    set_menu_sub(tweets_id_menu,derwin(tweets_id_win,tweets_id_win_h-2,tweets_id_win_w-2,1,1));
+    set_menu_sub(tweets_id_menu,tweets_id_subwin);
     set_menu_format(tweets_id_menu,1,COLS/6);
     post_menu(tweets_id_menu);
     wrefresh(tweets_id_win);
@@ -827,6 +900,23 @@ void refresh_tweet(){
             wprint_comment( comment_subwin,&tweets[current_tweet],current_comment);
         }
     }
+    for(int i=0;i<tweets_number;i++){
+        free_tweet(tweets[i]);
+    }
+    for(int i=0;i<tweets_number;i++){
+        free_item(tweets_id_items[i]);
+    }
+    free_menu(tweets_id_menu);
+    free(tweets_id_items);
+
+    free(tweets);
+
+    delwin(tweets_id_subwin);
+    delwin(tweets_id_win);
+    delwin(tweet_subwin);
+    delwin(tweet_win);
+    delwin(comment_subwin);
+    delwin(comment_win);
 }
 
 void like_tweet(Tweet* tweet){

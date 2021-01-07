@@ -61,9 +61,9 @@ void print_tweet(Tweet tweet){
 void wprint_tweet(WINDOW* win,Tweet* tweet){
     wclear(win);
     if(tweet==NULL){
-        wattron(win,COLOR_PAIR(1));
+        wattron(win,COLOR_PAIR(ERROR_COLOR));
         mvwprintw(win,1,4,"No tweet :(");
-        wattroff(win,COLOR_PAIR(1));
+        wattroff(win,COLOR_PAIR(ERROR_COLOR));
     }
     else{
         mvwprintw(win,0,0,"author:%s",tweet->author,tweet->id);
@@ -74,6 +74,18 @@ void wprint_tweet(WINDOW* win,Tweet* tweet){
 }
 
 void add_comment(Tweet* tweet,Comment comment){
+    //if author exist just change the comment
+    int author_exist = -1;
+    for(int i=0;i<tweet->comment_number;i++){
+        if(strcmp(comment.author,tweet->comments[i].author)==0){
+            author_exist = i;
+            break;
+        }
+    }
+    if(author_exist!=-1){
+        strcpy(tweet->comments[author_exist].content,comment.content);
+        return;
+    }
     Comment* tmp = (Comment*)calloc(tweet->comment_number+1 , sizeof(Comment));
     for(int i=0;i<tweet->comment_number;i++){
         tmp[i] = tweet->comments[i];
@@ -87,9 +99,9 @@ void add_comment(Tweet* tweet,Comment comment){
 void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
     wclear(win);
     if(tweet==NULL || tweet->comment_number==0){
-        wattron(win,COLOR_PAIR(1));
+        wattron(win,COLOR_PAIR(ERROR_COLOR));
         mvwprintw(win,1,3,"No Comments :(");
-        wattroff(win,COLOR_PAIR(1));
+        wattroff(win,COLOR_PAIR(ERROR_COLOR));
     }
     else{
         Comment comment = tweet->comments[number];

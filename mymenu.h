@@ -99,9 +99,9 @@ void start_menu(){
 void signup_menu(){
     char username[MAX];
     char password[MAX];
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     printw("Sing up Page\n");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     printw("Enter Your Username:\n");
     echo();
     curs_set(TRUE);
@@ -120,14 +120,16 @@ void signup_menu(){
     char* message = cJSON_GetObjectItem(json,"message")->valuestring;
 
     if(strcmp(type,"Successful")==0){
+        attron(COLOR_PAIR(SUCCESS_COLOR));
         printw("\n Signed up Successfully...\n");
+        attroff(COLOR_PAIR(SUCCESS_COLOR));
         press_key_to_continue();
         login_menu();
     }
     else{
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
         printw("Error: %s\n",message);
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
         press_key_to_continue();
     }
     cJSON_Delete(json);
@@ -135,9 +137,9 @@ void signup_menu(){
 
 void login_menu(){
     clear();
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     printw("Login Page\n");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     printw("Enter Your Username:\n");
     echo();
     curs_set(TRUE);
@@ -158,14 +160,16 @@ void login_menu(){
 
     if(strcmp(type,"Token")==0){
         strcpy(auth,message);
+        attron(COLOR_PAIR(SUCCESS_COLOR));
         printw("Logged in Successfully\n");
+        attroff(COLOR_PAIR(SUCCESS_COLOR));
         press_key_to_continue();
         main_menu();
     }
     else{
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
         printw("Error: %s\n",message);
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
         press_key_to_continue();
     }
     cJSON_Delete(json);
@@ -303,9 +307,9 @@ void timeline_menu(){
 void search_menu(){
     char username_search[MAX];
     clear();
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Search User");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Type the username");
     move(2,0);
     curs_set(TRUE);
@@ -321,9 +325,9 @@ void search_menu(){
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
-        attron(COLOR_PAIR(1));
-        mvprintw(LINES/2,4,"This user doesn't exixt ):");
-        attroff(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
+        mvprintw(LINES/2,4,cJSON_GetObjectItem(json,"message")->valuestring);
+        attroff(COLOR_PAIR(ERROR_COLOR));
         move(LINES/2+1,4);
         press_key_to_continue();
         cJSON_Delete(json);
@@ -466,9 +470,9 @@ void tweet_profile_menu(){
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
-        attron(COLOR_PAIR(1));
-        mvprintw(LINES/2,4,"This user doesn't exixt ):");
-        attroff(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
+        mvprintw(LINES/2,4,"%s",cJSON_GetObjectItem(json,"message"));
+        attroff(COLOR_PAIR(ERROR_COLOR));
         press_key_to_continue();
         cJSON_Delete(json);
         return;
@@ -636,9 +640,9 @@ void personal_area_menu(){
 
 void set_bio_menu(){
     char bio[MAX];
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Setting bio");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Enter bio:");
     move(2,0);
     curs_set(1);
@@ -655,11 +659,17 @@ void set_bio_menu(){
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     move(3,0);
     if(strcmp(type,"Error")==0){
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
+    }
+    else{
+        attron(COLOR_PAIR(SUCCESS_COLOR));
     }
     printw("%s",cJSON_GetObjectItem(json,"message")->valuestring);
     if(strcmp(type,"Error")==0){
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
+    }
+    else{
+        attroff(COLOR_PAIR(SUCCESS_COLOR));
     }
     move(4,0);
     press_key_to_continue();
@@ -669,9 +679,9 @@ void set_bio_menu(){
 void change_password_menu(){
     char new_password[MAX];
     char curr_password[MAX];
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Changing password");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Enter current password:");
     move(2,0);
     scanw("%s",curr_password);
@@ -686,11 +696,17 @@ void change_password_menu(){
     cJSON* json = cJSON_Parse(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     if(strcmp(type,"Error")==0){
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
+    }
+    else{
+        attroff(COLOR_PAIR(SUCCESS_COLOR));
     }
     mvprintw(5,0,cJSON_GetObjectItem(json,"message")->valuestring);
     if(strcmp(type,"Error")==0){
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
+    }
+    else{
+        attroff(COLOR_PAIR(SUCCESS_COLOR));
     }
     move(6,0);
     press_key_to_continue();
@@ -704,8 +720,9 @@ void logout(){
     send_request(request,strlen(request),respons);
 
     clear();
-
-    printw("Loged out\n");
+    attron(COLOR_PAIR(SUCCESS_COLOR));
+    printw("Logged out\n");
+    attroff(COLOR_PAIR(SUCCESS_COLOR));
     press_key_to_continue();
 }
 
@@ -714,9 +731,9 @@ void send_tweet(){
     char tweet[MAX];
     
     clear();
-    attron(COLOR_PAIR(2));
+    attron(COLOR_PAIR(TITLE_COLOR));
     printw("Send Tweet\n");
-    attroff(COLOR_PAIR(2));
+    attroff(COLOR_PAIR(TITLE_COLOR));
     printw("Type your tweet:\n");
     echo();
     curs_set(TRUE);
@@ -728,7 +745,9 @@ void send_tweet(){
     char respons[3*MAX];
     sprintf(request,"send tweet %s,%s\n",auth,tweet);
     send_request(request,strlen(request),respons);
+    attron(COLOR_PAIR(SUCCESS_COLOR));
     printw("tweet sent\n");
+    attroff(COLOR_PAIR(SUCCESS_COLOR));
     press_key_to_continue();
 }
 
@@ -755,9 +774,9 @@ void refresh_tweet(){
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
 
     if(strcmp(type,"List")!=0){
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
         printw("Error accured\n");
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
         press_key_to_continue();
         cJSON_Delete(json);
         return;
@@ -769,9 +788,9 @@ void refresh_tweet(){
     clear();
 
     if(tweets_number<1){
-        attron(COLOR_PAIR(1));
+        attron(COLOR_PAIR(ERROR_COLOR));
         mvprintw(LINES/2 ,4,"NO new tweets :(");
-        attroff(COLOR_PAIR(1));
+        attroff(COLOR_PAIR(ERROR_COLOR));
         move(LINES/2+1,4);
         press_key_to_continue();
         free(tweets);

@@ -7,6 +7,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include <string.h>
+#include <stdarg.h>
 #include "consts.h"
 
 int make_socket(const char ip[],int port){
@@ -60,5 +61,18 @@ void send_request(const char* request,size_t request_size,char** respons){
         strncat(*respons,buffer,read_bytes);
     }
     close(server_socket);
+}
+
+void send_requestf(char** respons,const char* format,...){
+    va_list ap;
+    va_start(ap,format);
+    size_t request_size = vsnprintf(NULL,0,format,ap);
+    char* request = malloc(request_size + 1);
+    va_end(ap);
+    va_start(ap,format);
+    vsprintf(request,format,ap);
+    send_request(request,request_size,respons);
+    free(request);
+    va_end(ap);
 }
 #endif

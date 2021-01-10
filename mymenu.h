@@ -112,10 +112,11 @@ void signup_menu(){
     scanw("%s",password);
 
     char request[3*MAX];
-    char response[MAX];
+    char* response;
     sprintf(request,"signup %s,%s\n",username,password);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON *json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     char* message = cJSON_GetObjectItem(json,"message")->valuestring;
 
@@ -151,10 +152,11 @@ void login_menu(){
 
 
     char request[3*MAX];
-    char response[MAX]; 
+    char* response; 
     sprintf(request,"login %s,%s\n",username,password);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON *json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     char* message = cJSON_GetObjectItem(json,"message")->valuestring;
 
@@ -318,10 +320,11 @@ void search_menu(){
     noecho();
     curs_set(FALSE);
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"search %s,%s\n",auth,username_search);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON* json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
@@ -447,26 +450,29 @@ void search_menu(){
 
 void follow(User* user){
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"follow %s,%s\n",auth,user->username);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
+    free(response);
     user->following_status = 1;
 }
 
 void unfollow(User* user){
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"unfollow %s,%s\n",auth,user->username);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
+    free(response);
     user->following_status = 0;
 }
 //TODO
 void tweet_profile_menu(){
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"profile %s\n",auth);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON* json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
     if(strcmp(type,"Profile")!=0){
@@ -652,10 +658,11 @@ void set_bio_menu(){
     curs_set(0);
 
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"set bio %s,%s\n",auth,bio);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON* json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     move(3,0);
     if(strcmp(type,"Error")==0){
@@ -690,10 +697,11 @@ void change_password_menu(){
     scanw("%s",new_password);
 
     char request[4*MAX];
-    char response[4*MAX];
+    char* response;
     sprintf(request,"change password %s,%s,%s\n",auth,curr_password,new_password);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     cJSON* json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
     if(strcmp(type,"Error")==0){
         attron(COLOR_PAIR(ERROR_COLOR));
@@ -715,10 +723,10 @@ void change_password_menu(){
 
 void logout(){
     char request[2*MAX];
-    char respons[2*MAX];
+    char* respons;
     sprintf(request,"logout %s\n",auth);
-    send_request(request,strlen(request),respons);
-
+    send_request(request,strlen(request),&respons);
+    free(respons);
     clear();
     attron(COLOR_PAIR(SUCCESS_COLOR));
     printw("Logged out\n");
@@ -742,9 +750,10 @@ void send_tweet(){
     noecho();
 
     char request[3*MAX];
-    char respons[3*MAX];
+    char* respons;
     sprintf(request,"send tweet %s,%s\n",auth,tweet);
-    send_request(request,strlen(request),respons);
+    send_request(request,strlen(request),&respons);
+    free(respons);
     attron(COLOR_PAIR(SUCCESS_COLOR));
     printw("tweet sent\n");
     attroff(COLOR_PAIR(SUCCESS_COLOR));
@@ -766,11 +775,12 @@ void send_tweet(){
 
 void refresh_tweet(){
     char request[2*MAX];
-    char response[2*MAX];
+    char* response;
     sprintf(request,"refresh %s\n",auth);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
     refresh();
     cJSON *json = cJSON_Parse(response);
+    free(response);
     char* type = cJSON_GetObjectItem(json,"type")->valuestring;
 
     if(strcmp(type,"List")!=0){
@@ -940,9 +950,10 @@ void refresh_tweet(){
 
 void like_tweet(Tweet* tweet){
     char request[2*MAX];
-    char response[2*MAX];
+    char* response;
     sprintf(request,"like %s,%d\n",auth,tweet->id);
-    send_request(request,strlen(request),response);
+    send_request(request,strlen(request),&response);
+    free(response);
     tweet->likes++;
 }
 
@@ -959,10 +970,10 @@ void comment_tweet(WINDOW* win,Tweet* tweet){
     noecho();
 
     char request[3*MAX];
-    char response[3*MAX];
+    char* response;
     sprintf(request,"comment %s,%d,%s\n",auth,tweet->id,new_comment.content);
-    send_request(request,strlen(request),response);
-
+    send_request(request,strlen(request),&response);
+    free(response);
     strcpy(new_comment.author,username);
     add_comment(tweet,new_comment);
 }

@@ -386,6 +386,9 @@ void search_menu(){
                 comment_change = 1;
                 current_tweet--;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_RIGHT:
             if(current_tweet+1<user.tweets_number){
@@ -393,17 +396,26 @@ void search_menu(){
                 comment_change = 1;
                 current_tweet++;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_UP:
             if(current_comment-1>=0){
                 comment_change = 1;
                 current_comment--;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_DOWN:
             if(user.tweets+current_tweet!=NULL && current_comment+1<user.tweets[current_tweet].comment_number){
                 current_comment++;
                 comment_change = 1;
+            }
+            else{
+                beep();
             }
             break;
         case 'f':
@@ -527,6 +539,9 @@ void tweet_profile_menu(){
                 comment_change = 1;
                 current_tweet--;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_RIGHT:
             if(current_tweet+1<user.tweets_number){
@@ -534,17 +549,26 @@ void tweet_profile_menu(){
                 comment_change = 1;
                 current_tweet++;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_UP:
             if(current_comment-1>=0){
                 comment_change = 1;
                 current_comment--;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_DOWN:
             if(user.tweets+current_tweet!=NULL && current_comment+1<user.tweets[current_tweet].comment_number){
                 current_comment++;
                 comment_change = 1;
+            }
+            else{
+                beep();
             }
             break;
         case 'q':
@@ -861,27 +885,41 @@ void refresh_tweet(){
         switch (ch)
         {
         case KEY_RIGHT:
-            menu_driver(tweets_id_menu,REQ_RIGHT_ITEM);
-            tweet_change = 1;
-            comment_change = 1;
-            current_comment = 0;
+            if(menu_driver(tweets_id_menu,REQ_RIGHT_ITEM)==E_OK){
+                tweet_change = 1;
+                comment_change = 1;
+                current_comment = 0;
+            }
+            else{
+                beep();
+            }
             break;
         case KEY_LEFT:
-            menu_driver(tweets_id_menu,REQ_LEFT_ITEM);
-            tweet_change = 1;
-            comment_change = 1;
-            current_comment = 0;
+            if(menu_driver(tweets_id_menu,REQ_LEFT_ITEM)==E_OK){
+                tweet_change = 1;
+                comment_change = 1;
+                current_comment = 0;
+            }
+            else{
+                beep();
+            }
             break;
         case KEY_UP:
             if(current_comment-1>=0){
                 current_comment--;
                 comment_change = 1;
             }
+            else{
+                beep();
+            }
             break;
         case KEY_DOWN:
             if(current_comment+1<tweets[current_tweet].comment_number){
                 current_comment++;
                 comment_change = 1;
+            }
+            else{
+                beep();
             }
             break;
         case 'l':

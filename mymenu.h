@@ -331,7 +331,7 @@ void search_menu(){
         return;
     }
     clear();
-    int help_y = LINES - 4;
+    int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
     mvprintw(help_y+2,0,"press u to unfollow,f to follow, and q to quit");
@@ -349,7 +349,7 @@ void search_menu(){
 
     int tweet_win_x = 0,
         tweet_win_y = user_win_y + user_win_h;
-    int tweet_win_h = 5,
+    int tweet_win_h = (LINES - user_win_h-3)/2,
         tweet_win_w = COLS;
     WINDOW* tweet_win = newwin(tweet_win_h,tweet_win_w,tweet_win_y,tweet_win_x);
     keypad(tweet_win,TRUE);
@@ -359,7 +359,7 @@ void search_menu(){
 
     int comment_win_x = 0,
         comment_win_y = tweet_win_y + tweet_win_h;
-    int comment_win_h = 5,
+    int comment_win_h = (LINES - user_win_h-3)/2,
         comment_win_w = COLS;
     WINDOW* comment_win = newwin(comment_win_h,comment_win_w,comment_win_y,comment_win_x);
     keypad(comment_win,TRUE);
@@ -490,7 +490,7 @@ void tweet_profile_menu(){
 
     int tweet_win_x = 0,
         tweet_win_y = user_win_y + user_win_h;
-    int tweet_win_h = 5,
+    int tweet_win_h = (LINES - user_win_h-3)/2,
         tweet_win_w = COLS;
     WINDOW* tweet_win = newwin(tweet_win_h,tweet_win_w,tweet_win_y,tweet_win_x);
     keypad(tweet_win,TRUE);
@@ -500,7 +500,7 @@ void tweet_profile_menu(){
 
     int comment_win_x = 0,
         comment_win_y = tweet_win_y + tweet_win_h;
-    int comment_win_h = 5,
+    int comment_win_h = (LINES - user_win_h-3)/2,
         comment_win_w = COLS;
     WINDOW* comment_win = newwin(comment_win_h,comment_win_w,comment_win_y,comment_win_x);
     keypad(comment_win,TRUE);
@@ -797,18 +797,18 @@ void refresh_tweet(){
     tweet_win_y = tweets_id_win_y + tweets_id_win_h;
     tweet_win_x = 0;
     int tweet_win_h , tweet_win_w;
-    tweet_win_h = 5;
+    tweet_win_h = (LINES - tweets_id_win_h - 3)/2;
     tweet_win_w = COLS;
 
     int comment_win_y , comment_win_x;
     comment_win_y = tweet_win_y + tweet_win_h;
     comment_win_x = 0;
     int comment_win_h , comment_win_w;
-    comment_win_h = 5;
+    comment_win_h = (LINES - tweets_id_win_h - 3)/2;
     comment_win_w = COLS;
 
 
-    int help_y = LINES - 4;
+    int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
     mvprintw(help_y+2,0,"press l to like,c to comment, and q to quit");

@@ -66,9 +66,11 @@ void wprint_tweet(WINDOW* win,Tweet* tweet){
         wattroff(win,COLOR_PAIR(ERROR_COLOR));
     }
     else{
-        mvwprintw(win,0,0,"author:%s",tweet->author,tweet->id);
-        mvwprintw(win,1,0,"%s",tweet->content);
-        mvwprintw(win,2,0,"Likes:%d      Comments:%d\n",tweet->likes,tweet->comment_number);
+        wprintw(win,"author:%s\n",tweet->author,tweet->id);
+        wattron(win,COLOR_PAIR(TWEET_COLOR));
+        wprintw(win,"%s\n",tweet->content);
+        wattroff(win,COLOR_PAIR(TWEET_COLOR));
+        wprintw(win,"Likes:%d      Comments:%d",tweet->likes,tweet->comment_number);
     }
     wrefresh(win);
 }
@@ -105,9 +107,11 @@ void wprint_comment(WINDOW* win,const Tweet* const tweet,const int number){
     }
     else{
         Comment comment = tweet->comments[number];
-        mvwprintw(win,0,0,"comment %d",number+1);
-        mvwprintw(win,1,0,"author:%s",comment.author);
-        mvwprintw(win,2,0,"%s",comment.content);
+        wprintw(win,"comment %d\n",number+1);
+        wprintw(win,"author:%s\n",comment.author);
+        wattron(win,COLOR_PAIR(COMMENT_COLOR));
+        wprintw(win,"%s\n",comment.content);
+        wattroff(win,COLOR_PAIR(COMMENT_COLOR));
     }
     wrefresh(win);
 }

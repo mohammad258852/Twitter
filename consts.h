@@ -13,7 +13,7 @@ char password[MAX];
 int server_status = 1;
 
 enum {
-    ERROR_COLOR=1,TITLE_COLOR,SUCCESS_COLOR
+    ERROR_COLOR=1,TITLE_COLOR,SUCCESS_COLOR,TWEET_COLOR,COMMENT_COLOR
 };
 
 #endif

@@ -9,6 +9,7 @@ void onexit(){
 }
 
 int main(){
+    system("resize -s 30 100 > /dev/null");
     //init ncurses
     initscr();
     cbreak();
@@ -21,8 +22,10 @@ int main(){
     //end of init
     //colors
     init_pair(1,COLOR_RED,COLOR_BLACK);//error color
-    init_pair(2,COLOR_BLUE,COLOR_CYAN);//title color
+    init_pair(2,COLOR_WHITE,COLOR_CYAN);//title color
     init_pair(3,COLOR_BLACK,COLOR_GREEN);//success
+    init_pair(4,COLOR_BLACK,COLOR_CYAN);//tweet color
+    init_pair(5,COLOR_BLACK,COLOR_CYAN);//comment color
     //end of colors
     start_menu();
 

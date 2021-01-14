@@ -48,11 +48,11 @@ void send_request(const char* request,size_t request_size,char** respons){
     }
 
     send(server_socket,request,request_size,0);
-    char buffer[MAX];
+    char buffer[MAXBUF];
     *respons = calloc(1,1);
     int total_bytes = 0;
     while(1){
-        int read_bytes = read(server_socket,buffer,MAX);
+        int read_bytes = read(server_socket,buffer,MAXBUF);
         if(read_bytes<=0){
             break;
         }

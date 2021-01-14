@@ -9,7 +9,7 @@ typedef
 struct __comment
 {
     char author[MAX];
-    char content[MAX];
+    char content[MAXTEXT];
 }Comment;
 
 Comment make_comment_json(cJSON* json){

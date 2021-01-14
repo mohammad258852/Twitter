@@ -7,6 +7,7 @@
 #include<ncurses.h>
 #include<menu.h>
 #include<form.h>
+#include<ctype.h>
 #include"consts.h"
 #include"mysocket.h"
 #include"cJSON.h"
@@ -33,8 +34,10 @@ void set_bio_menu();
 void search_menu();
 void tweet_profile_menu();
 void personal_area_menu();
-
-
+int  is_valid_username(const char* us);
+int  is_valid_password(const char* ps);
+int  is_valid_text(const char* tx);
+int  is_valid_bio(const char* bi);
 
 
 void start_menu(){
@@ -100,16 +103,48 @@ void signup_menu(){
     char username[MAX];
     char password[MAX];
     attron(COLOR_PAIR(TITLE_COLOR));
-    printw("Sing up Page\n");
+    mvprintw(0,0,"Sing up Page");
     attroff(COLOR_PAIR(TITLE_COLOR));
-    printw("Enter Your Username:\n");
+    mvprintw(1,0,"Enter Your Username:");
     echo();
     curs_set(TRUE);
-    scanw("%s",username);
+    do{
+        move(2,0);
+        getnstr(username,MAX-1);
+        if(is_valid_username(username)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid username. just alphabets and numbers. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
     curs_set(FALSE);
     noecho();
-    printw("Enter Your Password:\n");
-    scanw("%s",password);
+    move(3,0);
+    clrtoeol();
+    mvprintw(3,0,"Enter Your Password:");
+    curs_set(TRUE);
+    do{
+        move(4,0);
+        getnstr(password,MAX-1);
+        if(is_valid_password(password)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(5,0,"Invalid password. just alphabets, numbers, and @$&. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(4,0);
+            clrtoeol();
+        }
+    }while(1);
+    curs_set(FALSE);
+    move(5,0);
+    clrtoeol();
 
     char* response;
     send_requestf(&response,"signup %s,%s\n",username,password);
@@ -137,16 +172,46 @@ void signup_menu(){
 void login_menu(){
     clear();
     attron(COLOR_PAIR(TITLE_COLOR));
-    printw("Login Page\n");
+    mvprintw(0,0,"Login Page\n");
     attroff(COLOR_PAIR(TITLE_COLOR));
-    printw("Enter Your Username:\n");
+    mvprintw(1,0,"Enter Your Username:\n");
     echo();
     curs_set(TRUE);
-    scanw("%s",username);
+    do{
+        move(2,0);
+        getnstr(username,MAX-1);
+        if(is_valid_username(username)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid username. just alphabets and numbers. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
     noecho();
     curs_set(FALSE);
-    printw("Enter Your Password:\n");
-    scanw("%s",password);
+    move(3,0);
+    clrtoeol();
+    mvprintw(3,0,"Enter Your Password:\n");
+    curs_set(TRUE);
+    do{
+        move(4,0);
+        getnstr(password,MAX-1);
+        if(is_valid_password(password)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(5,0,"Invalid password. just alphabets, numbers, and @$&. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(4,0);
+            clrtoeol();
+        }
+    }while(1);
+    curs_set(FALSE);
 
 
     char* response; 
@@ -309,12 +374,26 @@ void search_menu(){
     mvprintw(0,0,"Search User");
     attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Type the username");
-    move(2,0);
     curs_set(TRUE);
     echo();
-    scanw("%s",username_search);
+    do{
+        move(2,0);
+        getnstr(username_search,MAX-1);
+        if(is_valid_username(username_search)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid username. just alphabets and numbers. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
     noecho();
     curs_set(FALSE);
+    move(3,0);
+    clrtoeol();
     char* response;
     send_requestf(&response,"search %s,%s\n",auth,username_search);
     cJSON* json = cJSON_Parse(response);
@@ -662,12 +741,26 @@ void set_bio_menu(){
     mvprintw(0,0,"Setting bio");
     attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Enter bio:");
-    move(2,0);
     curs_set(1);
     echo();
-    getstr(bio);
+    do{
+        move(2,0);
+        getnstr(bio,MAX-1);
+        if(is_valid_bio(bio)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid bio. just alphabets and numbers and space. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
     noecho();
     curs_set(0);
+    move(3,0);
+    clrtoeol();
 
     char* response;
     send_requestf(&response,"set bio %s,%s\n",auth,bio);
@@ -700,11 +793,43 @@ void change_password_menu(){
     mvprintw(0,0,"Changing password");
     attroff(COLOR_PAIR(TITLE_COLOR));
     mvprintw(1,0,"Enter current password:");
-    move(2,0);
-    scanw("%s",curr_password);
+    curs_set(TRUE);
+    do{
+        move(2,0);
+        getnstr(curr_password,MAX-1);
+        if(is_valid_password(curr_password)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid password. just alphabets, numbers, and @$&. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
+    curs_set(FALSE);
+    move(3,0);
+    clrtoeol();
     mvprintw(3,0,"Enter new password:");
-    move(4,0);
-    scanw("%s",new_password);
+    curs_set(TRUE);
+    do{
+        move(4,0);
+        getnstr(new_password,MAX-1);
+        if(is_valid_password(new_password)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(5,0,"Invalid password. just alphabets, numbers, and @$&. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(4,0);
+            clrtoeol();
+        }
+    }while(1);
+    curs_set(FALSE);
+    move(5,0);
+    clrtoeol();
 
     char* response;
     send_requestf(&response,"change password %s,%s,%s\n",auth,curr_password,new_password);
@@ -742,7 +867,7 @@ void logout(){
 
 
 void send_tweet(){
-    char tweet[MAX];
+    char tweet[MAXTEXT];
     
     clear();
     attron(COLOR_PAIR(TITLE_COLOR));
@@ -751,7 +876,7 @@ void send_tweet(){
     printw("Type your tweet:\n");
     echo();
     curs_set(TRUE);
-    getstr(tweet);
+    getnstr(tweet,MAXTEXT-1);
     curs_set(FALSE);
     noecho();
 
@@ -979,7 +1104,7 @@ void comment_tweet(WINDOW* win,Tweet* tweet){
     wmove(win,1,0);
     echo();
     curs_set(TRUE);
-    wgetstr(win,new_comment.content);
+    wgetnstr(win,new_comment.content,MAXTEXT-1);
     curs_set(FALSE);
     noecho();
 
@@ -1009,6 +1134,27 @@ char* itos(int d){
     char* tmp = calloc(digs+1,sizeof(char));
     sprintf(tmp,"%d",d);
     return tmp;
+}
+
+int  is_valid_username(const char* const us){
+    for(int i=0;i<strlen(us);i++){
+        if(!isalnum(us[i]))
+            return 0;
+    }
+    return 1;
+}
+int  is_valid_password(const char* ps){
+    for(int i=0;i<strlen(ps);i++){
+        if(!isalnum(ps[i]) && ps[i]!='@' && ps[i]!='$' && ps[i]!='&')
+            return 0;
+    }
+    return 1;
+}
+int  is_valid_text(const char* tx){
+    return 1;
+}
+int is_valid_bio(const char* bi){
+    return 1;
 }
 
 #endif

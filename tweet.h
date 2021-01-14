@@ -10,7 +10,7 @@ struct __tweet
 {
     int id;
     char author[MAX];
-    char content[MAX];
+    char content[MAXTEXT];
     Comment *comments;
     int likes;
     int comment_number;

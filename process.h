@@ -9,6 +9,7 @@
 #include"consts.h"
 #include"utility.h"
 #include"user.h"
+#include"token.h"
 
 #define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -68,6 +69,30 @@ void signup(int sock,const char* command){
     }
 }
 void login(int sock,const char* command){
+    char username[MAXUSERNAME];
+    char password[MAXPASSWORD];
+    sscanf(command,"login %[^,],%[^\n]",username,password);
+
+    if(!check_username_exist(username)){
+        send_response(sock,"Error","username doesn't exist");
+        logoutf("usename %s doesn't exist",username);
+        return;
+    }
+    if(check_username_login(username)){
+        send_responsef(sock,"Error","user %s is already loged in",username);
+        logoutf("user %s is already loged in",username);
+        return;
+    }
+    User user = read_user(username);
+    if(strcmp(password,user.password)!=0){
+        send_responsef(sock,"Error","Wrong Password",username);
+        logoutf("user %s entered wrong password",username);
+        return;
+    }
+
+    Token* tok = add_user_token(username);
+    send_response(sock,"Token",tok->tok);
+    logoutf("user %s succussfuly loged in",username);
     return;
 }
 

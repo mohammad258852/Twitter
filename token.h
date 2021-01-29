@@ -12,17 +12,30 @@ typedef struct
     char username[MAXUSERNAME];
 }Token;
 
-Token* tokens = NULL;
-size_t token_number = 0;
+typedef struct __tokenlist{
+    Token tok;
+    struct __tokenlist* next;
+} TokenList;
+
+TokenList* list = NULL;
 
 //if valid returns the token otherwise return NULL
 Token* validate_token(const char* tok){
-    for(int i=0;i<token_number;i++){
-        if(strcmp(tok,(tokens+i)->tok) == 0){
-            return tokens + i;
+    for(TokenList* cur=list;cur!=NULL; cur = cur->next){
+        if(strcmp(tok,cur->tok.tok) == 0){
+            return &(cur->tok);
         }
     }
     return NULL;
+}
+
+int check_username_login(const char* username){
+    for(TokenList* cur=list;cur!=NULL; cur = cur->next){
+        if(strcmp(username,cur->tok.username) == 0){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 char random_char(){
@@ -41,22 +54,33 @@ void random_token(Token* t){
             t->tok[i] = random_char();
         }
         valid = 1;
-        for(int i=0;i<token_number;i++){
-            if(strcmp(t->tok,(tokens+i)->tok)==0){
-                valid = 0;
-                break;
-            }
+        if(validate_token(t->tok)!=NULL){
+            valid = 0;
         }
     }while(!valid);
 }
 
-void add_user_token(const char* const username){
+Token* add_user_token(const char* const username){
     Token t;
     random_token(&t);
     strcpy(t.username,username);
-    tokens = (Token*)realloc(tokens,(token_number+1)*sizeof(Token));
-    *(tokens+token_number) = t;
-    token_number++;
+
+    if(list==NULL){
+        list = calloc(1,sizeof(TokenList));
+        list->tok = t;
+        list->next = NULL;
+        return &(list->tok);
+    }
+    else{
+        TokenList* cur = list;
+        while(cur->next!=NULL){
+            cur = cur->next;
+        }
+        cur->next = calloc(1,sizeof(TokenList));
+        cur->next->tok = t;
+        cur->next->next = NULL;
+        return &(cur->next->tok);
+    }
 }
 
 #endif

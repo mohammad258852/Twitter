@@ -39,7 +39,6 @@ int check_username_login(const char* username){
 }
 
 char random_char(){
-    srand((unsigned int)time(NULL));
     int x = rand()%36;
     if(x < 26)
         return 'a'+x;
@@ -48,6 +47,7 @@ char random_char(){
 }
 
 void random_token(Token* t){
+    srand((unsigned int)time(NULL));
     int valid;
     do{
         for(int i=0;i<TOKENSIZE;i++){

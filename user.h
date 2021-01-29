@@ -5,18 +5,17 @@
 #include"tweet.h"
 #include"consts.h"
 #include"cJSON.h"
+#include"userlist.h"
+#include"tweetlist.h"
 
 typedef struct
 {
     char username[MAXUSERNAME];
     char password[MAXPASSWORD];
     char bio[MAXBIO];
-    size_t followers_number;
-    char (*followers)[MAXUSERNAME];
-    size_t followings_number;
-    char (*followings)[MAXUSERNAME];
-    size_t tweets_number;
-    int* tweets;
+    UserList* followers;
+    UserList* followings;
+    TweetList* tweets;
 } User;
 
 cJSON* user2json(const User* const user){
@@ -26,20 +25,20 @@ cJSON* user2json(const User* const user){
     cJSON_AddItemToObject(user_json,"bio",cJSON_CreateString(user->bio));
 
     cJSON* followers_json = cJSON_CreateArray();
-    for(int i=0;i<user->followers_number;i++){
-        cJSON_AddItemToArray(followers_json,cJSON_CreateString(user->followers[i]));
+    for(UserList* i=user->followers;i!=NULL;i = i->next){
+        cJSON_AddItemToArray(followers_json,cJSON_CreateString(i->username));
     }
     cJSON_AddItemToObject(user_json,"followers",followers_json);
 
     cJSON* followings_json = cJSON_CreateArray();
-    for(int i=0;i<user->followings_number;i++){
-        cJSON_AddItemToArray(followings_json,cJSON_CreateString(user->followings[i]));
+    for(UserList* i=user->followings;i!=NULL;i = i->next){
+        cJSON_AddItemToArray(followings_json,cJSON_CreateString(i->username));
     }
     cJSON_AddItemToObject(user_json,"followings",followings_json);
 
     cJSON* tweets_json = cJSON_CreateArray();
-    for(int i=0;i<user->tweets_number;i++){
-        cJSON_AddItemToArray(tweets_json,cJSON_CreateNumber(user->tweets[i]));
+    for(TweetList* i=user->tweets;i!=NULL;i = i->next){
+        cJSON_AddItemToArray(tweets_json,cJSON_CreateNumber(i->id));
     }
     cJSON_AddItemToObject(user_json,"tweets",tweets_json);
 
@@ -52,38 +51,11 @@ User json2user(const cJSON* json){
     strcpy(tmp.password, cJSON_GetObjectItem(json,"username")->valuestring);
     strcpy(tmp.bio, cJSON_GetObjectItem(json,"bio")->valuestring);
     
-    tmp.followers_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"followers"));
-    if(tmp.followers_number!=0){
-        tmp.followers = calloc((tmp.followers_number),sizeof(char[MAXUSERNAME]));
-        int i = 0;
-        for(cJSON* followers_json=cJSON_GetObjectItem(json,"followers")->child;
-            followers_json!=NULL;
-            followers_json=followers_json->next,i++){
-                strcpy(tmp.followers[i],followers_json->valuestring);
-        }
-    }
+    tmp.followers = make_user_list(cJSON_GetObjectItem(json,"followers"));
 
-    tmp.followings_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"followings"));
-    if(tmp.followings_number!=0){
-        tmp.followings = calloc((tmp.followings_number),sizeof(char[MAXUSERNAME]));
-        int i = 0;
-        for(cJSON* following_json=cJSON_GetObjectItem(json,"followings")->child;
-            following_json!=NULL;
-            following_json=following_json->next,i++){
-                strcpy(tmp.followings[i],following_json->valuestring);
-        }
-    }
+    tmp.followings = make_user_list(cJSON_GetObjectItem(json,"followings"));
 
-    tmp.tweets_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"tweets"));
-    if(tmp.tweets_number!=0){
-        tmp.tweets = calloc((tmp.tweets_number),sizeof(int));
-        int i = 0;
-        for(cJSON* tweet_json=cJSON_GetObjectItem(json,"tweets")->child;
-            tweet_json!=NULL;
-            tweet_json=tweet_json->next,i++){
-                tmp.tweets[i] = tweet_json->valueint;
-        }
-    }
+    tmp.tweets = make_tweet_list(cJSON_GetObjectItem(json,"tweets"));
 
     return tmp;
 }
@@ -152,11 +124,9 @@ int create_user(const char* username,const char* password){
     strcpy(tmp.username,username);
     strcpy(tmp.password,password);
     strcpy(tmp.bio,"");
-    tmp.followers_number = 0;
     tmp.followers = NULL;
-    tmp.followings_number = 0;
     tmp.followings = NULL;
-    tmp.tweets_number = 0;
+    tmp.tweets = NULL;
 
     write_user(&tmp);
 

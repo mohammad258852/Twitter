@@ -17,14 +17,14 @@ void process(int);
 int string_start_with(const char* str,const char* start);
 void signup(int,const char*);
 void login(int ,const char*);
-char* make_response(const char* const type,const char* const message,char** result);
+void send_tweet(int,const char*);
 
 void process(int sock){
     char* request;
     get_message(sock,&request);
     logoutf("message recieved: %s",request);
-    const char* commands[] = {"signup","login"};
-    void (*fun[])(int,const char*) = {signup,login};
+    const char* commands[] = {"signup","login","send tweet"};
+    void (*fun[])(int,const char*) = {signup,login,send_tweet};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -94,6 +94,28 @@ void login(int sock,const char* command){
     send_response(sock,"Token",tok->tok);
     logoutf("user %s succussfuly loged in",username);
     return;
+}
+
+void send_tweet(int sock,const char* commad){
+    char tok[TOKENSIZE+1];
+    char content[MAXTEX];
+    sscanf(commad,"send tweet %[^,],%[^\n]",tok,content);
+
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+
+    int id = add_tweet(token->username,content);
+    if(id==0){
+        send_response(sock,"Error","Failed to make tweet");
+        logout("Failed to make tweet");
+        return;
+    }
+
+    add_tweet_to_user(token->username,id);
 }
 
 #endif

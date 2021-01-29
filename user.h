@@ -18,6 +18,15 @@ typedef struct
     TweetList* tweets;
 } User;
 
+cJSON* user2json(const User* const user);
+User json2user(const cJSON* json);
+int write_user(const User* user);
+User read_user(const char* username);
+int check_username_exist(const char* const username);
+int create_user(const char* username,const char* password);
+int add_tweet_to_user(const char* username,int id);
+void free_user(User* user);
+
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
     cJSON_AddItemToObject(user_json,"username",cJSON_CreateString(user->username));
@@ -133,5 +142,17 @@ int create_user(const char* username,const char* password){
     return 1;
 }
 
+int add_tweet_to_user(const char* username,int id){
+    User user = read_user(username);
+    add_tweet_to_list(&user.tweets,id);
+    write_user(&user);
+    free_user(&user);
+}
+
+void free_user(User* user){
+    free_userlist(user->followers);
+    free_userlist(user->followings);
+    free_tweetlist(user->tweets);
+}
 
 #endif

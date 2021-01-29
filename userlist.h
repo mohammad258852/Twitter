@@ -11,6 +11,9 @@ typedef struct __userlist{
     struct __userlist* next;
 } UserList ;
 
+UserList* make_user_list(cJSON* json);
+void free_userlist(UserList* list);
+
 UserList* make_user_list(cJSON* json){
     UserList* first = NULL;
     UserList** cur = &first;
@@ -26,6 +29,14 @@ UserList* make_user_list(cJSON* json){
         cur = &((*pre)->next);
     }
     return first;
+}
+
+void free_userlist(UserList* list){
+    while(list!=NULL){
+        UserList* next = list->next;
+        free(list);
+        list = next;
+    }
 }
 
 #endif

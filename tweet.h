@@ -19,7 +19,13 @@ typedef struct
 int add_tweet(const char*,const char*);
 int tweet_exist(int);
 int write_tweet(const Tweet*);
+Tweet read_tweet(int);
+cJSON* read_tweet_json(int);
 cJSON* tweet2json(const Tweet*);
+Tweet json2tweet(cJSON*);
+int is_user_read_tweet(const char*,int);
+void user_read_tweet(const char*,int);
+void sort_tweet(int*,size_t);
 
 
 int tweet_exist(int id){
@@ -47,6 +53,28 @@ cJSON* tweet2json(const Tweet* tweet){
     return json;
 }
 
+Tweet json2tweet(cJSON* json){
+    Tweet tweet;
+    tweet.id = cJSON_GetObjectItem(json,"id")->valueint;
+    strcpy(tweet.author,cJSON_GetObjectItem(json,"author")->valuestring);
+    strcpy(tweet.content,cJSON_GetObjectItem(json,"content")->valuestring);
+    tweet.likes = cJSON_GetObjectItem(json,"likes")->valueint;
+
+    CommentList** cur = &tweet.comments;
+    CommentList** prev = NULL;
+    for(cJSON* i=cJSON_GetObjectItem(json,"comments")->child;i!=NULL;i=i->next){
+        (*cur) = calloc(1,sizeof(CommentList));
+        (*cur)->comment = json2comment(i);
+        (*cur)->next = NULL;
+        if(prev != NULL){
+            (*prev)->next = *cur;
+        }
+        prev = cur;
+        cur = &((*prev)->next);
+    }
+    return tweet;
+}
+
 int write_tweet(const Tweet* tweet){
     system("mkdir -p "TWEETPATH);
     char path[MAXFILENAMESIZE];
@@ -62,6 +90,44 @@ int write_tweet(const Tweet* tweet){
     return 1;
 }
 
+Tweet read_tweet(int id){
+    Tweet tweet;
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETPATH"%d.json",id);
+    FILE* file = fopen(path,"r");
+    if(file==NULL){
+        return tweet;
+    }
+    size_t size;
+    fseek(file,0,SEEK_END);
+    size = ftell(file);
+    fseek(file,0,SEEK_SET);
+    char* content = malloc(size+1);
+    fgets(content,size+1,file);
+    fclose(file);
+    cJSON* json = cJSON_Parse(content);
+    tweet = json2tweet(json);
+    return tweet;
+}
+
+cJSON* read_tweet_json(int id){
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETPATH"%d.json",id);
+    FILE* file = fopen(path,"r");
+    if(file==NULL){
+        return NULL;
+    }
+    size_t size;
+    fseek(file,0,SEEK_END);
+    size = ftell(file);
+    fseek(file,0,SEEK_SET);
+    char* content = malloc(size+1);
+    fgets(content,size+1,file);
+    fclose(file);
+    cJSON* json = cJSON_Parse(content);
+    return json;
+}
+
 int add_tweet(const char* username,const char* content){
     Tweet tmp;
     tmp.id = 1;
@@ -71,11 +137,50 @@ int add_tweet(const char* username,const char* content){
     strcpy(tmp.author,username);
     strcpy(tmp.content,content);
     tmp.likes = 0;
-    tmp.comments = 0;
+    tmp.comments = NULL;
 
     if(write_tweet(&tmp)==0)
         return 0;
     return tmp.id;
+}
+
+int is_user_read_tweet(const char* username,int id){
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETREADPATH"%d.txt",id);
+    char user[MAXUSERNAME];
+    FILE* file = fopen(path,"r");
+    if(file==NULL){
+        return 0;
+    }
+    while(fscanf(file,"%s",user)!=EOF){
+        if(strcmp(username,user)==0){
+            fclose(file);
+            return 1;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
+void user_read_tweet(const char* username,int id){
+    system("mkdir -p "TWEETREADPATH);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETREADPATH"%d.txt",id);
+    FILE* file = fopen(path,"a");
+    if(file==NULL){
+        return;
+    }
+    fprintf(file,"%s\n",username);
+    fclose(file);
+    return;
+}
+
+int tweet_cmp(const void* x,const void* y){
+    return (*(int*)x - *(int*)y);
+}
+
+void sort_tweet(int* ids,size_t n){
+    qsort(ids,n,sizeof(int),tweet_cmp);
 }
 
 #endif

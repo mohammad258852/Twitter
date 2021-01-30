@@ -9,7 +9,15 @@
 #include <string.h>
 #include <stdarg.h>
 #include "consts.h"
+#include"utility.h"
+#include"cJSON.h"
 
+void send_message(int sock,const char* const message,size_t message_size);
+void send_messagef(int sock,const char* format,...);
+void send_response(int sock,const char* const type,const char* const message);
+void send_response_json(int sock,const char* const type,cJSON* message);
+void send_responsef(int sock,const char* const type,const char* format,...);
+void get_message(int sock,char** result);
 
 void send_message(int sock,const char* const message,size_t message_size){
     send(sock,message,message_size,0);
@@ -32,6 +40,17 @@ void send_response(int sock,const char* const type,const char* const message){
     size_t len = snprintf(NULL,0,"{\"type\":\"%s\",\"message\":\"%s\"}",type,message);
     char* tmp = malloc(len+1);
     sprintf(tmp,"{\"type\":\"%s\",\"message\":\"%s\"}",type,message);
+    logoutf("sending response:%s",tmp);
+    send_message(sock,tmp,len);
+    free(tmp);
+}
+
+void send_response_json(int sock,const char* const type,cJSON* json){
+    char* message = cJSON_PrintUnformatted(json);
+    size_t len = snprintf(NULL,0,"{\"type\":\"%s\",\"message\":%s}",type,message);
+    char* tmp = malloc(len+1);
+    sprintf(tmp,"{\"type\":\"%s\",\"message\":%s}",type,message);
+    logoutf("sending response:%s",tmp);
     send_message(sock,tmp,len);
     free(tmp);
 }
@@ -44,6 +63,7 @@ void send_responsef(int sock,const char* const type,const char* format,...){
     va_end(ap);
     va_start(ap,format);
     vsprintf(message,format,ap);
+    logoutf("sending response:%s",message);
     send_response(sock,type,message);
     free(message);
     va_end(ap);

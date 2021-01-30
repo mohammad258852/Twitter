@@ -17,14 +17,15 @@ void process(int);
 int string_start_with(const char* str,const char* start);
 void signup(int,const char*);
 void login(int ,const char*);
+void refresh(int ,const char*);
 void send_tweet(int,const char*);
 
 void process(int sock){
     char* request;
     get_message(sock,&request);
     logoutf("message recieved: %s",request);
-    const char* commands[] = {"signup","login","send tweet"};
-    void (*fun[])(int,const char*) = {signup,login,send_tweet};
+    const char* commands[] = {"signup","login","send tweet","refresh"};
+    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -116,6 +117,21 @@ void send_tweet(int sock,const char* commad){
     }
 
     add_tweet_to_user(token->username,id);
+}
+
+void refresh(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    sscanf(command,"refresh %[^\n]",tok);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+
+    cJSON* tweets = unread_tweets(token->username);
+    send_response_json(sock,"List",tweets);
+    cJSON_Delete(tweets);
 }
 
 #endif

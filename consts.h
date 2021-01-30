@@ -19,5 +19,6 @@
 
 #define USERSFILEPATH "Resource/Users/"
 #define TWEETPATH "Resource/Tweets/"
+#define TWEETREADPATH "Resource/TweetsRead/"
 
 #endif  

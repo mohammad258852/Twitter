@@ -53,6 +53,7 @@ void random_token(Token* t){
         for(int i=0;i<TOKENSIZE;i++){
             t->tok[i] = random_char();
         }
+        t->tok[TOKENSIZE] = '\0';
         valid = 1;
         if(validate_token(t->tok)!=NULL){
             valid = 0;

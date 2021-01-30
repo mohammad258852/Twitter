@@ -15,7 +15,7 @@ typedef struct
     char bio[MAXBIO];
     UserList* followers;
     UserList* followings;
-    TweetList* tweets;
+    TweetList* personalTweets;
 } User;
 
 cJSON* user2json(const User* const user);
@@ -26,6 +26,7 @@ int check_username_exist(const char* const username);
 int create_user(const char* username,const char* password);
 int add_tweet_to_user(const char* username,int id);
 void free_user(User* user);
+cJSON* unread_tweets(const char*);
 
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
@@ -46,10 +47,10 @@ cJSON* user2json(const User* const user){
     cJSON_AddItemToObject(user_json,"followings",followings_json);
 
     cJSON* tweets_json = cJSON_CreateArray();
-    for(TweetList* i=user->tweets;i!=NULL;i = i->next){
+    for(TweetList* i=user->personalTweets;i!=NULL;i = i->next){
         cJSON_AddItemToArray(tweets_json,cJSON_CreateNumber(i->id));
     }
-    cJSON_AddItemToObject(user_json,"tweets",tweets_json);
+    cJSON_AddItemToObject(user_json,"personalTweets",tweets_json);
 
     return user_json;
 }
@@ -64,7 +65,7 @@ User json2user(const cJSON* json){
 
     tmp.followings = make_user_list(cJSON_GetObjectItem(json,"followings"));
 
-    tmp.tweets = make_tweet_list(cJSON_GetObjectItem(json,"tweets"));
+    tmp.personalTweets = make_tweet_list(cJSON_GetObjectItem(json,"personalTweets"));
 
     return tmp;
 }
@@ -135,7 +136,7 @@ int create_user(const char* username,const char* password){
     strcpy(tmp.bio,"");
     tmp.followers = NULL;
     tmp.followings = NULL;
-    tmp.tweets = NULL;
+    tmp.personalTweets = NULL;
 
     write_user(&tmp);
 
@@ -144,7 +145,7 @@ int create_user(const char* username,const char* password){
 
 int add_tweet_to_user(const char* username,int id){
     User user = read_user(username);
-    add_tweet_to_list(&user.tweets,id);
+    add_tweet_to_list(&user.personalTweets,id);
     write_user(&user);
     free_user(&user);
 }
@@ -152,7 +153,30 @@ int add_tweet_to_user(const char* username,int id){
 void free_user(User* user){
     free_userlist(user->followers);
     free_userlist(user->followings);
-    free_tweetlist(user->tweets);
+    free_tweetlist(user->personalTweets);
+}
+
+cJSON* unread_tweets(const char* username){
+    User user = read_user(username);
+    int* ids = calloc(1,sizeof(int));
+    int total = 0;
+    for(UserList* i = user.followings;i!=NULL; i=i->next){
+        User following = read_user(i->username);
+        for(TweetList* j=following.personalTweets; j!=NULL; j=j->next){
+            if(!is_user_read_tweet(username,j->id)){
+                user_read_tweet(username,j->id);
+                ids = realloc(ids,total+1);
+                ids[total] = j->id;
+                total++;
+            }
+        }
+    }
+    sort_tweet(ids,total);
+    cJSON* json = cJSON_CreateArray();
+    for(int i=0;i<total;i++){
+        cJSON_AddItemToArray(json,read_tweet_json(ids[i]));
+    }
+    return json;
 }
 
 #endif

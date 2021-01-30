@@ -27,7 +27,7 @@ Tweet make_tweet_json(cJSON* json){
         tmp.comments = (Comment*)calloc(tmp.comment_number,sizeof(Comment));
         int i=0;
         for(cJSON *elm = cJSON_GetObjectItem(json,"comments")->child;i<tmp.comment_number&&elm!=NULL;i++,elm=elm->next){
-            tmp.comments[i] = make_comment_json(elm);
+            tmp.comments[i] = make_comment_json(elm->child);
         }
     }
     else{

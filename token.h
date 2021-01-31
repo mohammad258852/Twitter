@@ -19,6 +19,13 @@ typedef struct __tokenlist{
 
 TokenList* list = NULL;
 
+Token* validate_token(const char* tok);
+int check_username_login(const char* username);
+char random_char();
+void random_token(Token* t);
+Token* add_user_token(const char* const username);
+int delete_token(Token* token);
+
 //if valid returns the token otherwise return NULL
 Token* validate_token(const char* tok){
     for(TokenList* cur=list;cur!=NULL; cur = cur->next){
@@ -82,6 +89,22 @@ Token* add_user_token(const char* const username){
         cur->next->next = NULL;
         return &(cur->next->tok);
     }
+}
+
+int delete_token(Token* token){
+    TokenList** cur = &list;
+    while((*cur)!=NULL){
+        if(strcmp( (*cur)->tok.tok , token->tok )==0){
+            TokenList* tmp = (*cur);
+            *cur = tmp->next;
+            free(tmp);
+            return 1;
+        }
+        if((*cur)->next==NULL)
+            break;
+        cur = &(*cur)->next;
+    }
+    return 0;
 }
 
 #endif

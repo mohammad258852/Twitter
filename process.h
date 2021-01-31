@@ -19,13 +19,14 @@ void signup(int,const char*);
 void login(int ,const char*);
 void refresh(int ,const char*);
 void send_tweet(int,const char*);
+void loggout(int,const char*);
 
 void process(int sock){
     char* request;
     get_message(sock,&request);
     logoutf("message recieved: %s",request);
-    const char* commands[] = {"signup","login","send tweet","refresh"};
-    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh};
+    const char* commands[] = {"signup","login","send tweet","refresh","logout"};
+    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh,loggout};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -132,6 +133,25 @@ void refresh(int sock,const char* command){
     cJSON* tweets = unread_tweets(token->username);
     send_response_json(sock,"List",tweets);
     cJSON_Delete(tweets);
+}
+
+void loggout(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    sscanf(command,"logout %[^\n]",tok);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(delete_token(token)){
+        send_response(sock,"Succussful","Now logged out");
+        logoutf("user %s loged out",token->username);
+    }
+    else{
+        send_response(sock,"Error","Something wrong happened");
+        logout("Can't delete token");
+    }
 }
 
 #endif

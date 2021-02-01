@@ -76,7 +76,7 @@ void wprint_tweet(WINDOW* win,Tweet* tweet){
 }
 
 void add_comment(Tweet* tweet,Comment comment){
-    //if author exist just change the comment
+    /*//if author exist just change the comment
     int author_exist = -1;
     for(int i=0;i<tweet->comment_number;i++){
         if(strcmp(comment.author,tweet->comments[i].author)==0){
@@ -87,7 +87,7 @@ void add_comment(Tweet* tweet,Comment comment){
     if(author_exist!=-1){
         strcpy(tweet->comments[author_exist].content,comment.content);
         return;
-    }
+    }*/
     Comment* tmp = (Comment*)calloc(tweet->comment_number+1 , sizeof(Comment));
     for(int i=0;i<tweet->comment_number;i++){
         tmp[i] = tweet->comments[i];

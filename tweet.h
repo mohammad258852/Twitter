@@ -30,6 +30,7 @@ void sort_tweet(int*,size_t);
 int is_user_like_tweet(const char*,int);
 void user_like_tweet(const char*,int);
 void user_unlike_tweet(const char*,int);
+void add_comment_to_tweet(int,const char*,const char*);
 
 
 int tweet_exist(int id){
@@ -260,6 +261,16 @@ void user_unlike_tweet(const char* username,int id){
     delete_tweet_readers(id);
     user_read_tweet(username,id);
     return;
+}
+void add_comment_to_tweet(int id,const char* author,const char* content){
+    Tweet tweet = read_tweet(id);
+    Comment comm;
+    strcpy(comm.author,author);
+    strcpy(comm.content,content);
+    add_comment_to_list(&tweet.comments,&comm);
+    write_tweet(&tweet);
+    delete_tweet_readers(id);
+    user_read_tweet(author,id);
 }
 
 #endif

@@ -1092,8 +1092,19 @@ void refresh_tweet(){
 void like_tweet(Tweet* tweet){
     char* response;
     send_requestf(&response,"like %s,%d\n",auth,tweet->id);
+    cJSON* json = cJSON_Parse(response);
     free(response);
-    tweet->likes++;
+    char* type = cJSON_GetObjectItem(json,"type")->valuestring;
+    if(strcmp(type,"Error")==0){
+        return;
+    }
+    char* message = cJSON_GetObjectItem(json,"message")->valuestring;
+    if(strcmp(message,"Like")==0){
+        tweet->likes++;
+    }
+    else{
+        tweet->likes--;
+    }
 }
 
 

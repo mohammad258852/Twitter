@@ -876,9 +876,26 @@ void send_tweet(){
     printw("Type your tweet:\n");
     echo();
     curs_set(TRUE);
-    getnstr(tweet,MAXTEXT-1);
-    curs_set(FALSE);
+    do{
+        move(2,0);
+        getnstr(tweet,MAXTEXT-1);
+        if(is_valid_text(tweet)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(LINES-2,0,"Invalid text. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
     noecho();
+    curs_set(FALSE);
+    int cur_line = getcury(stdscr);
+    move(LINES-2,0);
+    clrtoeol();
+    move(cur_line,0);
 
     char* respons;
     send_requestf(&respons,"send tweet %s,%s\n",auth,tweet);
@@ -993,7 +1010,8 @@ void refresh_tweet(){
     menu_opts_off(tweets_id_menu, O_SHOWDESC);
     set_menu_win(tweets_id_menu,tweets_id_win);
     set_menu_sub(tweets_id_menu,tweets_id_subwin);
-    set_menu_format(tweets_id_menu,1,COLS/6);
+    int each_option_len = tweets_id_menu->itemlen+tweets_id_menu->desclen+tweets_id_menu->marklen;
+    set_menu_format(tweets_id_menu,1,(tweets_id_win_w-2)/(each_option_len));
     post_menu(tweets_id_menu);
     wrefresh(tweets_id_win);
 
@@ -1010,7 +1028,7 @@ void refresh_tweet(){
         switch (ch)
         {
         case KEY_RIGHT:
-            if(menu_driver(tweets_id_menu,REQ_RIGHT_ITEM)==E_OK){
+            if(menu_driver(tweets_id_menu,REQ_NEXT_ITEM)==E_OK){
                 tweet_change = 1;
                 comment_change = 1;
                 current_comment = 0;
@@ -1020,7 +1038,7 @@ void refresh_tweet(){
             }
             break;
         case KEY_LEFT:
-            if(menu_driver(tweets_id_menu,REQ_LEFT_ITEM)==E_OK){
+            if(menu_driver(tweets_id_menu,REQ_PREV_ITEM)==E_OK){
                 tweet_change = 1;
                 comment_change = 1;
                 current_comment = 0;
@@ -1112,12 +1130,26 @@ void comment_tweet(WINDOW* win,Tweet* tweet){
     Comment new_comment;
     wclear(win);
     mvwprintw(win,0,0,"Type Your Comment:");
-    wmove(win,1,0);
     echo();
     curs_set(TRUE);
-    wgetnstr(win,new_comment.content,MAXTEXT-1);
+    do{
+        wmove(win,1,0);
+        wgetnstr(win,new_comment.content,MAXTEXT-1);
+        if(is_valid_text(new_comment.content)){
+            break;
+        }
+        else{
+            wattron(win,COLOR_PAIR(ERROR_COLOR));
+            mvwprintw(win,getmaxy(win)-1,0,"Invalid Text. try again");
+            wattroff(win,COLOR_PAIR(ERROR_COLOR));
+            wmove(win,1,0);
+            wclrtoeol(win);
+        }
+    }while(1);
     curs_set(FALSE);
     noecho();
+    wmove(win,getmaxy(win)-1,0);
+    wclrtoeol(win);
 
     char* response;
     send_requestf(&response,"comment %s,%d,%s\n",auth,tweet->id,new_comment.content);
@@ -1148,6 +1180,8 @@ char* itos(int d){
 }
 
 int  is_valid_username(const char* const us){
+    if(strlen(us)==0)
+        return 0;
     for(int i=0;i<strlen(us);i++){
         if(!isalnum(us[i]))
             return 0;
@@ -1155,6 +1189,8 @@ int  is_valid_username(const char* const us){
     return 1;
 }
 int  is_valid_password(const char* ps){
+    if(strlen(ps)==0)
+        return 0;
     for(int i=0;i<strlen(ps);i++){
         if(!isalnum(ps[i]) && ps[i]!='@' && ps[i]!='$' && ps[i]!='&')
             return 0;
@@ -1162,9 +1198,13 @@ int  is_valid_password(const char* ps){
     return 1;
 }
 int  is_valid_text(const char* tx){
+    if(strlen(tx)==0)
+        return 0;
     return 1;
 }
 int is_valid_bio(const char* bi){
+    if(strlen(bi)==0)
+        return 0;
     return 1;
 }
 

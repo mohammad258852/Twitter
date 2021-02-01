@@ -9,7 +9,7 @@ void onexit(){
 }
 
 int main(){
-    system("resize -s 30 100 > /dev/null");
+    //system("resize -s 30 100 > /dev/null");
     //init ncurses
     initscr();
     cbreak();

@@ -2,7 +2,7 @@
 #define CONSTS
 
 #define MAX 70
-#define MAXTEXT 600
+#define MAXTEXT 350
 #define MAXBUF 1024
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 

@@ -6,3 +6,7 @@ main:main.c consts.h mysocket.h process.h utility.h token.h user.h tweet.h tweet
 
 cJSON.o:cJSON.c
 	gcc -c cJSON.c -o cJSON.o
+
+clean:
+	rm -R "Resource/TweetsRead/"
+	rm -R "Resource/TweetsLike/"

@@ -25,7 +25,11 @@ cJSON* tweet2json(const Tweet*);
 Tweet json2tweet(cJSON*);
 int is_user_read_tweet(const char*,int);
 void user_read_tweet(const char*,int);
+void delete_tweet_readers(int);
 void sort_tweet(int*,size_t);
+int is_user_like_tweet(const char*,int);
+void user_like_tweet(const char*,int);
+void user_unlike_tweet(const char*,int);
 
 
 int tweet_exist(int id){
@@ -59,12 +63,12 @@ Tweet json2tweet(cJSON* json){
     strcpy(tweet.author,cJSON_GetObjectItem(json,"author")->valuestring);
     strcpy(tweet.content,cJSON_GetObjectItem(json,"content")->valuestring);
     tweet.likes = cJSON_GetObjectItem(json,"likes")->valueint;
-
+    tweet.comments = NULL;
     CommentList** cur = &tweet.comments;
     CommentList** prev = NULL;
     for(cJSON* i=cJSON_GetObjectItem(json,"comments")->child;i!=NULL;i=i->next){
         (*cur) = calloc(1,sizeof(CommentList));
-        (*cur)->comment = json2comment(i);
+        (*cur)->comment = json2comment(i->child);
         (*cur)->next = NULL;
         if(prev != NULL){
             (*prev)->next = *cur;
@@ -107,6 +111,8 @@ Tweet read_tweet(int id){
     fclose(file);
     cJSON* json = cJSON_Parse(content);
     tweet = json2tweet(json);
+    free(content);
+    cJSON_Delete(json);
     return tweet;
 }
 
@@ -175,12 +181,85 @@ void user_read_tweet(const char* username,int id){
     return;
 }
 
+void delete_tweet_readers(int id){
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETREADPATH"%d.txt",id);
+    if(access(path,F_OK)!=0){
+        return;
+    }
+    remove(path);
+}
+
 int tweet_cmp(const void* x,const void* y){
     return (*(int*)x - *(int*)y);
 }
 
 void sort_tweet(int* ids,size_t n){
     qsort(ids,n,sizeof(int),tweet_cmp);
+}
+
+int is_user_like_tweet(const char* username,int id){
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETLIKEPATH"%d.txt",id);
+    char user[MAXUSERNAME];
+    FILE* file = fopen(path,"r");
+    if(file==NULL){
+        return 0;
+    }
+    while(fscanf(file,"%s",user)!=EOF){
+        if(strcmp(username,user)==0){
+            fclose(file);
+            return 1;
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
+void user_like_tweet(const char* username,int id){
+    system("mkdir -p "TWEETLIKEPATH);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETLIKEPATH"%d.txt",id);
+    FILE* file = fopen(path,"a");
+    if(file==NULL){
+        return;
+    }
+    fprintf(file,"%s\n",username);
+    fclose(file);
+    Tweet tweet = read_tweet(id);
+    tweet.likes++;
+    write_tweet(&tweet);
+    delete_tweet_readers(id);
+    user_read_tweet(username,id);
+    return;
+}
+
+void user_unlike_tweet(const char* username,int id){
+    system("mkdir -p "TWEETLIKEPATH);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETLIKEPATH"%d.txt",id);
+    FILE* file = fopen(path,"r");
+    FILE* tmp_file = fopen(TWEETLIKEPATH"tmp.txt","w");
+    if(file==NULL || tmp_file==NULL){
+        return;
+    }
+    char user[MAXUSERNAME];
+    while(fscanf(file,"%s",user)!=EOF){
+        if(strcmp(username,user)==0){
+            continue;
+        }
+        fprintf(tmp_file,"%s\n",user);
+    }
+    fclose(file);
+    fclose(tmp_file);
+    remove(path);
+    rename(TWEETLIKEPATH"tmp.txt",path);
+    Tweet tweet = read_tweet(id);
+    tweet.likes--;
+    write_tweet(&tweet);
+    delete_tweet_readers(id);
+    user_read_tweet(username,id);
+    return;
 }
 
 #endif

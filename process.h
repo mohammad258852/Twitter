@@ -20,13 +20,14 @@ void login(int ,const char*);
 void refresh(int ,const char*);
 void send_tweet(int,const char*);
 void loggout(int,const char*);
+void like(int,const char*);
 
 void process(int sock){
     char* request;
     get_message(sock,&request);
     logoutf("message recieved: %s",request);
-    const char* commands[] = {"signup","login","send tweet","refresh","logout"};
-    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh,loggout};
+    const char* commands[] = {"signup","login","send tweet","refresh","logout","like"};
+    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh,loggout,like};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -151,6 +152,33 @@ void loggout(int sock,const char* command){
     else{
         send_response(sock,"Error","Something wrong happened");
         logout("Can't delete token");
+    }
+}
+
+void like(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    int id;
+    sscanf(command,"like %[^,],%d",tok,&id);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid Token");
+        return;
+    }
+    if(!tweet_exist(id)){
+        send_response(sock,"Error","Invalid tweet id");
+        logout("Invalid tweet id");
+        return;
+    }
+    if(!is_user_like_tweet(token->username,id)){
+        user_like_tweet(token->username,id);
+        send_response(sock,"Successful","Like");
+        logoutf("user %s liked tweet %d",token->username,id);
+    }
+    else{
+        user_unlike_tweet(token->username,id);
+        send_response(sock,"Successful","Unlike");
+        logoutf("user %s unliked tweet %d",token->username,id);
     }
 }
 

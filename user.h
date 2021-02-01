@@ -159,16 +159,24 @@ void free_user(User* user){
 
 cJSON* unread_tweets(const char* username){
     User user = read_user(username);
-    int* ids = calloc(1,sizeof(int));
     int total = 0;
     for(UserList* i = user.followings;i!=NULL; i=i->next){
         User following = read_user(i->username);
         for(TweetList* j=following.personalTweets; j!=NULL; j=j->next){
             if(!is_user_read_tweet(username,j->id)){
-                user_read_tweet(username,j->id);
-                ids = realloc(ids,total+1);
-                ids[total] = j->id;
                 total++;
+            }
+        }
+    }
+    int* ids = malloc(total * sizeof(int));
+    int* iter = ids;
+    for(UserList* i = user.followings;i!=NULL; i=i->next){
+        User following = read_user(i->username);
+        for(TweetList* j=following.personalTweets; j!=NULL; j=j->next){
+            if(!is_user_read_tweet(username,j->id)){
+                user_read_tweet(username,j->id);
+                *iter = j->id;
+                iter++;
             }
         }
     }
@@ -177,6 +185,7 @@ cJSON* unread_tweets(const char* username){
     for(int i=0;i<total;i++){
         cJSON_AddItemToArray(json,read_tweet_json(ids[i]));
     }
+    free(ids);
     return json;
 }
 

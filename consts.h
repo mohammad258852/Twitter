@@ -14,7 +14,7 @@
 #define MAXUSERNAME 70
 #define MAXPASSWORD 70
 #define MAXBIO 70
-#define MAXTEX 600
+#define MAXTEX 350
 #define MAXFILENAMESIZE (MAXUSERNAME + 20)
 
 #define USERSFILEPATH "Resource/Users/"

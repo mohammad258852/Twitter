@@ -132,6 +132,7 @@ cJSON* read_tweet_json(int id){
     fgets(content,size+1,file);
     fclose(file);
     cJSON* json = cJSON_Parse(content);
+    free(content);
     return json;
 }
 

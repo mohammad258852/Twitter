@@ -13,6 +13,7 @@ typedef struct __userlist{
 
 UserList* make_user_list(cJSON* json);
 void free_userlist(UserList* list);
+int count_userlist(UserList* list);
 
 UserList* make_user_list(cJSON* json){
     UserList* first = NULL;
@@ -37,6 +38,15 @@ void free_userlist(UserList* list){
         free(list);
         list = next;
     }
+}
+
+int count_userlist(UserList* list){
+    int n = 0;
+    while(list!=NULL){
+        n++;
+        list = list->next;
+    }
+    return n;
 }
 
 #endif

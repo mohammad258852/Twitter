@@ -12,6 +12,7 @@ typedef struct __tweetlist{
 TweetList* make_tweet_list(cJSON* json);
 void add_tweet_to_list(TweetList** list,int id);
 void free_tweetlist(TweetList* list);
+int count_tweetlist(TweetList* list);
 
 TweetList* make_tweet_list(cJSON* json){
     TweetList* first = NULL;
@@ -51,6 +52,15 @@ void free_tweetlist(TweetList* list){
         free(list);
         list = next;
     }
+}
+
+int count_tweetlist(TweetList* list){
+    int n = 0;
+    while(list!=NULL){
+        n++;
+        list = list->next;
+    }
+    return n;
 }
 
 #endif

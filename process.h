@@ -22,13 +22,18 @@ void send_tweet(int,const char*);
 void loggout(int,const char*);
 void like(int,const char*);
 void comment(int,const char*);
+void search(int,const char*);
 
 void process(int sock){
     char* request;
     get_message(sock,&request);
     logoutf("message recieved: %s",request);
-    const char* commands[] = {"signup","login","send tweet","refresh","logout","like","comment"};
-    void (*fun[])(int,const char*) = {signup,login,send_tweet,refresh,loggout,like,comment};
+    const char* commands[] = {"signup","login","send tweet",
+                                "refresh","logout","like",
+                                "comment","search"};
+    void (*fun[])(int,const char*) = {signup,login,send_tweet,
+                                    refresh,loggout,like,
+                                    comment,search};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -202,6 +207,32 @@ void comment(int sock,const char* command){
     add_comment_to_tweet(id,token->username,comm);
     send_response(sock,"Success","Comment Submited");
     logoutf("user %s send comment:%s",token->username,comm);
+}
+
+void search(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    char username[MAXUSERNAME];
+    sscanf(command,"search %[^,],%[^\n]",tok,username);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(!check_username_exist(username)){
+        send_response(sock,"Error","This user doesn't exist");
+        logoutf("user %s doesn't exist",username);
+        return;
+    }
+    if(strcmp(username,token->username)==0){
+        send_response(sock,"Error","Why do you want to search yourself");
+        logoutf("user %s searched him/herself",username);
+        return;
+    }
+    cJSON* json = make_user_for_client(username,token->username);
+    send_response_json(sock,"Profile",json);
+    logoutf("send %s data to %s",username,token->username);
+    cJSON_Delete(json);
 }
 
 #endif

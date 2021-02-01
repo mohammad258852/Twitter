@@ -27,6 +27,7 @@ int create_user(const char* username,const char* password);
 int add_tweet_to_user(const char* username,int id);
 void free_user(User* user);
 cJSON* unread_tweets(const char*);
+cJSON* make_user_for_client(const char*,const char*);
 
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
@@ -176,6 +177,49 @@ cJSON* unread_tweets(const char* username){
     for(int i=0;i<total;i++){
         cJSON_AddItemToArray(json,read_tweet_json(ids[i]));
     }
+    return json;
+}
+
+int is_user_follows_that(const char* user,const char* that){
+    User tmp = read_user(user);
+    for(UserList* i = tmp.followings;i!=NULL; i = i->next){
+        if(strcmp(that,i->username)==0)
+            return 1;
+    }
+    return 0;
+}
+
+cJSON* make_user_for_client(const char* username,const char* client_username){
+    User user = read_user(username);
+    cJSON* json = cJSON_CreateObject();
+    cJSON_AddItemToObject(json,"username",cJSON_CreateString(user.username));
+    cJSON_AddItemToObject(json,"bio",cJSON_CreateString(user.bio));
+    cJSON_AddItemToObject(json,"numberOfFollowers",cJSON_CreateNumber(count_userlist(user.followers)));
+    cJSON_AddItemToObject(json,"numberOfFollowings",cJSON_CreateNumber(count_userlist(user.followings)));
+    if(strcmp(username,client_username)==0 ){
+        cJSON_AddItemToObject(json,"followStatus",cJSON_CreateString("Yourself"));
+    }
+    else{
+        if(is_user_follows_that(client_username,username)){
+            cJSON_AddItemToObject(json,"followStatus",cJSON_CreateString("Followed"));
+        }
+        else{
+            cJSON_AddItemToObject(json,"followStatus",cJSON_CreateString("NotFollowed"));
+        }
+    }
+    int tweets_number = count_tweetlist(user.personalTweets);
+    int* ids = malloc(tweets_number*sizeof(int));
+    int* iter = ids;
+    for(TweetList* i=user.personalTweets;i!=NULL;i = i->next,iter++){
+        *iter = i->id;
+    }
+    sort_tweet(ids,tweets_number);
+    cJSON* tweet_arr = cJSON_CreateArray();
+    for(int i=0;i<tweets_number;i++){
+        cJSON_AddItemToArray(tweet_arr,read_tweet_json(ids[i]));
+    }
+    cJSON_AddItemToObject(json,"allTweets",tweet_arr);
+    free(ids);
     return json;
 }
 

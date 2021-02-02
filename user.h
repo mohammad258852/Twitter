@@ -61,7 +61,7 @@ cJSON* user2json(const User* const user){
 User json2user(const cJSON* json){
     User tmp;
     strcpy(tmp.username, cJSON_GetObjectItem(json,"username")->valuestring);
-    strcpy(tmp.password, cJSON_GetObjectItem(json,"username")->valuestring);
+    strcpy(tmp.password, cJSON_GetObjectItem(json,"password")->valuestring);
     strcpy(tmp.bio, cJSON_GetObjectItem(json,"bio")->valuestring);
     
     tmp.followers = make_user_list(cJSON_GetObjectItem(json,"followers"));

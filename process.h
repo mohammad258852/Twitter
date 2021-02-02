@@ -26,6 +26,7 @@ void search(int,const char*);
 void follow(int,const char*);
 void unfollow(int,const char*);
 void set_bio(int,const char*);
+void profile(int,const char*);
 
 void process(int sock){
     char* request;
@@ -34,11 +35,11 @@ void process(int sock){
     const char* commands[] = {"signup","login","send tweet",
                                 "refresh","logout","like",
                                 "comment","search","follow",
-                                "unfollow","set bio"};
+                                "unfollow","set bio","profile"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
-                                    unfollow,set_bio};
+                                    unfollow,set_bio,profile};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -305,6 +306,21 @@ void set_bio(int sock,const char* command){
     free_user(&user);
     send_response(sock,"Successful","bio changed successfully");
     logoutf("user %s changed his/her bio to %s",token->username,bio);
+}
+
+void profile(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    sscanf(command,"profile %[^\n]",tok);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    cJSON* json = make_user_for_client(token->username,token->username);
+    send_response_json(sock,"Profile",json);
+    logoutf("send %s profile",token->username);
+    cJSON_Delete(json);
 }
 
 #endif

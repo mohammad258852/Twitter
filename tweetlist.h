@@ -63,4 +63,18 @@ int count_tweetlist(TweetList* list){
     return n;
 }
 
+void delete_tweet_from_list(TweetList** list,int id){
+    while((*list)!=NULL){
+        if((*list)->id==id){
+            TweetList* tmp = (*list);
+            (*list) = tmp->next;
+            free(tmp);
+            return;
+        }
+        if((*list)->next==NULL)
+            return;
+        list = &((*list)->next);
+    }
+}
+
 #endif

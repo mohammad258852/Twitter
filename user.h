@@ -30,6 +30,8 @@ cJSON* unread_tweets(const char*);
 cJSON* make_user_for_client(const char*,const char*);
 void user_follow_that(const char*,const char*);
 void user_unfollow_that(const char*,const char*);
+void delete_tweet(const char*,int);
+int is_user_own_tweet(const char*,int);
 
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
@@ -254,6 +256,31 @@ void user_unfollow_that(const char* username,const char* thatname){
     write_user(&that);
     free_user(&user);
     free_user(&that);
+}
+
+void delete_tweet(const char* username,int id){
+    User user = read_user(username);
+    delete_tweet_from_list(&user.personalTweets,id);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,TWEETPATH"%d.json",id);
+    remove(path);
+    sprintf(path,TWEETLIKEPATH"%d.txt",id);
+    remove(path);
+    sprintf(path,TWEETREADPATH"%d.txt",id);
+    remove(path);
+    write_user(&user);
+    free_user(&user);
+}
+
+int is_user_own_tweet(const char* username,int id){
+    User user = read_user(username);
+    for(TweetList* i=user.personalTweets;i!=NULL;i = i->next){
+        if(i->id == id)
+            free_user(&user);
+            return 1;
+    }
+    free_user(&user);
+    return 0;
 }
 
 #endif

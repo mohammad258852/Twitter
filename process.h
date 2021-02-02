@@ -28,6 +28,7 @@ void unfollow(int,const char*);
 void set_bio(int,const char*);
 void profile(int,const char*);
 void change_password(int,const char*);
+void delete_request(int,const char*);
 
 void process(int sock){
     char* request;
@@ -37,12 +38,12 @@ void process(int sock){
                                 "refresh","logout","like",
                                 "comment","search","follow",
                                 "unfollow","set bio","profile",
-                                "change password"};
+                                "change password","delete"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
                                     unfollow,set_bio,profile,
-                                    change_password};
+                                    change_password,delete_request};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -348,6 +349,26 @@ void change_password(int sock,const char* command){
     free_user(&user);
     send_response(sock,"Successful","Password upadted");
     logout("Password updated");
+}
+
+void delete_request(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    int id;
+    sscanf(command,"delete %[^,],%d",tok,&id);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(!is_user_own_tweet(token->username,id)){
+        send_response(sock,"Error","This tweet is not yours");
+        logoutf("user %s does not own tweet %d",token->username,id);
+        return;
+    }
+    delete_tweet(token->username,id);
+    send_response(sock,"Successful","Tweet deleted");
+    logoutf("Tweet %d from %s deleted",id,token->username);
 }
 
 #endif

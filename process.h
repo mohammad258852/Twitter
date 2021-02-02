@@ -27,6 +27,7 @@ void follow(int,const char*);
 void unfollow(int,const char*);
 void set_bio(int,const char*);
 void profile(int,const char*);
+void change_password(int,const char*);
 
 void process(int sock){
     char* request;
@@ -35,11 +36,13 @@ void process(int sock){
     const char* commands[] = {"signup","login","send tweet",
                                 "refresh","logout","like",
                                 "comment","search","follow",
-                                "unfollow","set bio","profile"};
+                                "unfollow","set bio","profile",
+                                "change password"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
-                                    unfollow,set_bio,profile};
+                                    unfollow,set_bio,profile,
+                                    change_password};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -321,6 +324,30 @@ void profile(int sock,const char* command){
     send_response_json(sock,"Profile",json);
     logoutf("send %s profile",token->username);
     cJSON_Delete(json);
+}
+
+void change_password(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    char new_password[MAXPASSWORD];
+    char cur_password[MAXPASSWORD];
+    sscanf(command,"change password %[^,],%[^,],%[^\n]",tok,cur_password,new_password);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    User user = read_user(token->username);
+    if(strcmp(user.password,cur_password)!=0){
+        send_response(sock,"Error","Wrong password");
+        logout("Wrong password");
+        return;
+    }
+    strncpy(user.password,new_password,MAXPASSWORD);
+    write_user(&user);
+    free_user(&user);
+    send_response(sock,"Successful","Password upadted");
+    logout("Password updated");
 }
 
 #endif

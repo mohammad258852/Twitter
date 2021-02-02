@@ -23,6 +23,8 @@ void loggout(int,const char*);
 void like(int,const char*);
 void comment(int,const char*);
 void search(int,const char*);
+void follow(int,const char*);
+void unfollow(int,const char*);
 
 void process(int sock){
     char* request;
@@ -30,10 +32,12 @@ void process(int sock){
     logoutf("message recieved: %s",request);
     const char* commands[] = {"signup","login","send tweet",
                                 "refresh","logout","like",
-                                "comment","search"};
+                                "comment","search","follow",
+                                "unfollow"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
-                                    comment,search};
+                                    comment,search,follow,
+                                    unfollow};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -233,6 +237,55 @@ void search(int sock,const char* command){
     send_response_json(sock,"Profile",json);
     logoutf("send %s data to %s",username,token->username);
     cJSON_Delete(json);
+}
+
+void follow(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    char username[MAXUSERNAME];
+    sscanf(command,"follow %[^,],%s",tok,username);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(!check_username_exist(username)){
+        send_response(sock,"Error","No user with this username");
+        logoutf("Can't find %s",username);
+        return;
+    }
+    if(is_user_follows_that(token->username,username)){
+        send_response(sock,"Error","You already followed this user");
+        logoutf("user %s already follows %s",token->username,username);
+        return;
+    }
+    user_follow_that(token->username,username);
+    send_responsef(sock,"Success","now you follow %s",username);
+    logoutf("user %s follows %s",token->username,username);
+}
+void unfollow(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    char username[MAXUSERNAME];
+    sscanf(command,"unfollow %[^,],%s",tok,username);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(!check_username_exist(username)){
+        send_response(sock,"Error","No user with this username");
+        logoutf("Can't find %s",username);
+        return;
+    }
+    if(!is_user_follows_that(token->username,username)){
+        send_response(sock,"Error","You do not follow this user");
+        logoutf("user %s does not follows %s",token->username,username);
+        return;
+    }
+    user_unfollow_that(token->username,username);
+    send_responsef(sock,"Success","now you do not follow %s anymore",username);
+    logoutf("user %s unfollows %s",token->username,username);
 }
 
 #endif

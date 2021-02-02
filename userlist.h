@@ -12,6 +12,8 @@ typedef struct __userlist{
 } UserList ;
 
 UserList* make_user_list(cJSON* json);
+void add_user_to_list(UserList** list,const char* username);
+void delete_user_from_list(UserList** list,const char* username);
 void free_userlist(UserList* list);
 int count_userlist(UserList* list);
 
@@ -32,6 +34,21 @@ UserList* make_user_list(cJSON* json){
     return first;
 }
 
+void add_user_to_list(UserList** list,const char* username){
+    if(*list==NULL){
+        *list = calloc(1,sizeof(UserList));
+        strcpy((*list)->username,username);
+        (*list)->next = NULL;
+        return;
+    }
+    while((*list)->next!=NULL){
+        list = &((*list)->next);
+    }
+    (*list)->next = calloc(1,sizeof(UserList));
+    strcpy((*list)->next->username,username);
+    (*list)->next->next = NULL;
+}
+
 void free_userlist(UserList* list){
     while(list!=NULL){
         UserList* next = list->next;
@@ -47,6 +64,20 @@ int count_userlist(UserList* list){
         list = list->next;
     }
     return n;
+}
+
+void delete_user_from_list(UserList** list,const char* username){
+    while((*list)!=NULL){
+        if(strcmp((*list)->username,username)==0){
+            UserList* tmp = (*list);
+            (*list) = tmp->next;
+            free(tmp);
+            return;
+        }
+        if((*list)->next==NULL)
+            return;
+        list = &((*list)->next);
+    }
 }
 
 #endif

@@ -28,6 +28,8 @@ int add_tweet_to_user(const char* username,int id);
 void free_user(User* user);
 cJSON* unread_tweets(const char*);
 cJSON* make_user_for_client(const char*,const char*);
+void user_follow_that(const char*,const char*);
+void user_unfollow_that(const char*,const char*);
 
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
@@ -230,6 +232,28 @@ cJSON* make_user_for_client(const char* username,const char* client_username){
     cJSON_AddItemToObject(json,"allTweets",tweet_arr);
     free(ids);
     return json;
+}
+
+void user_follow_that(const char* username,const char* thatname){
+    User user = read_user(username);
+    User that = read_user(thatname);
+    add_user_to_list(&user.followings,thatname);
+    add_user_to_list(&that.followers,username);
+    write_user(&user);
+    write_user(&that);
+    free_user(&user);
+    free_user(&that);
+}
+
+void user_unfollow_that(const char* username,const char* thatname){
+    User user = read_user(username);
+    User that = read_user(thatname);
+    delete_user_from_list(&user.followings,thatname);
+    delete_user_from_list(&that.followers,username);
+    write_user(&user);
+    write_user(&that);
+    free_user(&user);
+    free_user(&that);
 }
 
 #endif

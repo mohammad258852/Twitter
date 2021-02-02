@@ -123,4 +123,19 @@ void free_tweet(Tweet tweet){
     free(tweet.comments);
 }
 
+void tweet_copy(Tweet* dest,const Tweet* src){
+    dest->id = src->id;
+    strcpy(dest->author,src->author);
+    strcpy(dest->content,src->content);
+    dest->likes = src->likes;
+    dest->comment_number = src->comment_number;
+    if(dest->comment_number==0)
+        dest->comments = NULL;
+    else
+        dest->comments = calloc(dest->comment_number,sizeof(Comment));
+    for(int i=0;i<src->comment_number;i++){
+        dest->comments[i] = src->comments[i];
+    }
+}
+
 #endif

@@ -34,6 +34,7 @@ void set_bio_menu();
 void search_menu();
 void tweet_profile_menu();
 void personal_area_menu();
+int request_delete(User* user,int number);
 int  is_valid_username(const char* us);
 int  is_valid_password(const char* ps);
 int  is_valid_text(const char* tx);
@@ -566,7 +567,7 @@ void tweet_profile_menu(){
     int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
-    mvprintw(help_y+2,0,"press q to quit");
+    mvprintw(help_y+2,0,"press d to delete, q to quit");
     refresh();
     User user = make_user_json(cJSON_GetObjectItem(json,"message"));
     
@@ -650,6 +651,22 @@ void tweet_profile_menu(){
                 beep();
             }
             break;
+        case 'd':
+            if(current_tweet>=0 && current_tweet<user.tweets_number){
+                if(request_delete(&user,current_tweet)){
+                    tweet_change = 1;
+                    comment_change = 1;
+                    if(current_tweet>=1)
+                        current_tweet--;
+                }
+                else{
+                    beep();
+                }
+            }
+            else{
+                beep();
+            }
+            break;
         case 'q':
             continue_running = 0;
             break;
@@ -677,6 +694,40 @@ void tweet_profile_menu(){
     delwin(comment_subwin);
     delwin(comment_win);
 }
+
+int request_delete(User* user,int number){
+    char* response;
+    send_requestf(&response,"delete %s,%d\n",auth,user->tweets[number].id);
+    cJSON* json = cJSON_Parse(response);
+    free(response);
+    char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
+    if(strcmp(type,"Error")==0){
+        cJSON_Delete(json);
+        return 0;
+    }
+    if(user->tweets_number==1){
+        free_tweet(user->tweets[0]);
+        free(user->tweets);
+        user->tweets_number--;
+        user->tweets = NULL;
+        return 1;
+    }
+    Tweet* tmp = calloc(user->tweets_number-1,sizeof(Tweet));
+    int j = 0;
+    for(int i=0;i<user->tweets_number;i++){
+        if(i==number){
+            free_tweet(user->tweets[i]);
+            continue;
+        }
+        tweet_copy(&tmp[j++],&(user->tweets[i]));
+        free_tweet(user->tweets[i]);
+    }
+    free(user->tweets);
+    user->tweets_number--;
+    user->tweets = tmp;
+    return 1;
+}
+
 //TODO
 void personal_area_menu(){
     const char* choises[] = {

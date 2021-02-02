@@ -28,11 +28,13 @@ int main(){
     if(server_sock<0){
         fail("Failed to make socket");
     }
+    int true = 1;
+    setsockopt(server_sock,SOL_SOCKET,SO_REUSEADDR,&true,sizeof(int));
     logout("Socket made");
     address.sin_family = AF_INET;
     address.sin_port = htons(PORT);
     address.sin_addr.s_addr = INADDR_ANY;
-    
+
     int res = bind(server_sock , (struct sockaddr*)&address,address_len);
     if(res < 0){
         close(server_sock);

@@ -25,6 +25,7 @@ void comment(int,const char*);
 void search(int,const char*);
 void follow(int,const char*);
 void unfollow(int,const char*);
+void set_bio(int,const char*);
 
 void process(int sock){
     char* request;
@@ -33,11 +34,11 @@ void process(int sock){
     const char* commands[] = {"signup","login","send tweet",
                                 "refresh","logout","like",
                                 "comment","search","follow",
-                                "unfollow"};
+                                "unfollow","set bio"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
-                                    unfollow};
+                                    unfollow,set_bio};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -209,7 +210,7 @@ void comment(int sock,const char* command){
         return;
     }
     add_comment_to_tweet(id,token->username,comm);
-    send_response(sock,"Success","Comment Submited");
+    send_response(sock,"Successful","Comment Submited");
     logoutf("user %s send comment:%s",token->username,comm);
 }
 
@@ -260,7 +261,7 @@ void follow(int sock,const char* command){
         return;
     }
     user_follow_that(token->username,username);
-    send_responsef(sock,"Success","now you follow %s",username);
+    send_responsef(sock,"Successful","now you follow %s",username);
     logoutf("user %s follows %s",token->username,username);
 }
 void unfollow(int sock,const char* command){
@@ -284,8 +285,26 @@ void unfollow(int sock,const char* command){
         return;
     }
     user_unfollow_that(token->username,username);
-    send_responsef(sock,"Success","now you do not follow %s anymore",username);
+    send_responsef(sock,"Successful","now you do not follow %s anymore",username);
     logoutf("user %s unfollows %s",token->username,username);
+}
+
+void set_bio(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    char bio[MAXBIO];
+    sscanf(command,"set bio %[^,],%[^\n]",tok,bio);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    User user = read_user(token->username);
+    strncpy(user.bio,bio,MAXBIO);
+    write_user(&user);
+    free_user(&user);
+    send_response(sock,"Successful","bio changed successfully");
+    logoutf("user %s changed his/her bio to %s",token->username,bio);
 }
 
 #endif

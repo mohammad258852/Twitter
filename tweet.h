@@ -2,6 +2,7 @@
 #define TWEETH
 
 #include<string.h>
+#include<time.h>
 #include"cJSON.h"
 #include"consts.h"
 #include"comment.h"
@@ -13,6 +14,7 @@ typedef struct
     char author[MAXUSERNAME];
     char content[MAXTEX];
     unsigned likes;
+    time_t time;
     CommentList* comments;
 } Tweet;
 
@@ -31,6 +33,7 @@ int is_user_like_tweet(const char*,int);
 void user_like_tweet(const char*,int);
 void user_unlike_tweet(const char*,int);
 void add_comment_to_tweet(int,const char*,const char*);
+void free_tweet(Tweet*);
 
 
 int tweet_exist(int id){
@@ -49,6 +52,7 @@ cJSON* tweet2json(const Tweet* tweet){
     cJSON_AddItemToObject(json,"author",cJSON_CreateString(tweet->author));
     cJSON_AddItemToObject(json,"content",cJSON_CreateString(tweet->content));
     cJSON_AddItemToObject(json,"likes",cJSON_CreateNumber(tweet->likes));
+    cJSON_AddItemToObject(json,"time",cJSON_CreateNumber(tweet->time));
 
     cJSON* comments_json = cJSON_CreateArray();
     for(CommentList* i=tweet->comments; i!=NULL; i=i->next){
@@ -64,6 +68,7 @@ Tweet json2tweet(cJSON* json){
     strcpy(tweet.author,cJSON_GetObjectItem(json,"author")->valuestring);
     strcpy(tweet.content,cJSON_GetObjectItem(json,"content")->valuestring);
     tweet.likes = cJSON_GetObjectItem(json,"likes")->valueint;
+    tweet.time = cJSON_GetObjectItem(json,"time")->valueint;
     tweet.comments = NULL;
     CommentList** cur = &tweet.comments;
     CommentList** prev = NULL;
@@ -145,10 +150,13 @@ int add_tweet(const char* username,const char* content){
     strcpy(tmp.author,username);
     strcpy(tmp.content,content);
     tmp.likes = 0;
+    tmp.time = time(NULL);
     tmp.comments = NULL;
 
-    if(write_tweet(&tmp)==0)
+    if(write_tweet(&tmp)==0){
+        free_tweet(&tmp);
         return 0;
+    }
     return tmp.id;
 }
 
@@ -193,7 +201,11 @@ void delete_tweet_readers(int id){
 }
 
 int tweet_cmp(const void* x,const void* y){
-    return (*(int*)x - *(int*)y);
+    Tweet xx = read_tweet(*(int*)x);
+    Tweet yy = read_tweet(*(int*)y);
+    free_tweet(&xx);
+    free_tweet(&yy);
+    return (xx.time - yy.time);
 }
 
 void sort_tweet(int* ids,size_t n){
@@ -233,6 +245,7 @@ void user_like_tweet(const char* username,int id){
     write_tweet(&tweet);
     delete_tweet_readers(id);
     user_read_tweet(username,id);
+    free_tweet(&tweet);
     return;
 }
 
@@ -261,6 +274,7 @@ void user_unlike_tweet(const char* username,int id){
     write_tweet(&tweet);
     delete_tweet_readers(id);
     user_read_tweet(username,id);
+    free_tweet(&tweet);
     return;
 }
 void add_comment_to_tweet(int id,const char* author,const char* content){
@@ -272,6 +286,11 @@ void add_comment_to_tweet(int id,const char* author,const char* content){
     write_tweet(&tweet);
     delete_tweet_readers(id);
     user_read_tweet(author,id);
+    free_tweet(&tweet);
+}
+
+void free_tweet(Tweet* tweet){
+    free_commentlist(tweet->comments);
 }
 
 #endif

@@ -11,6 +11,7 @@ typedef struct __commentlist
 } CommentList;
 
 void add_comment_to_list(CommentList**,const Comment* comment);
+void free_commentlist(CommentList*);
 
 void add_comment_to_list(CommentList** list,const Comment* comment){
     if(*list==NULL){
@@ -25,6 +26,14 @@ void add_comment_to_list(CommentList** list,const Comment* comment){
     (*list)->next = calloc(1,sizeof(CommentList));
     (*list)->next->comment = *comment;
     (*list)->next->next = NULL;
+}
+
+void free_commentlist(CommentList* list){
+    while(list!=NULL){
+        CommentList* next = list->next;
+        free(list);
+        list = next;
+    }
 }
 
 #endif

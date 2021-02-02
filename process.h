@@ -108,7 +108,7 @@ void login(int sock,const char* command){
         logoutf("user %s entered wrong password",username);
         return;
     }
-
+    free_user(&user);
     Token* tok = add_user_token(username);
     send_response(sock,"Token",tok->tok);
     logoutf("user %s succussfuly loged in",username);

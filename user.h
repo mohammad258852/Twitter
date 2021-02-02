@@ -171,6 +171,7 @@ cJSON* unread_tweets(const char* username){
                 total++;
             }
         }
+        free(&following);
     }
     int* ids = malloc(total * sizeof(int));
     int* iter = ids;
@@ -183,12 +184,14 @@ cJSON* unread_tweets(const char* username){
                 iter++;
             }
         }
+        free_user(&following);
     }
     sort_tweet(ids,total);
     cJSON* json = cJSON_CreateArray();
     for(int i=0;i<total;i++){
         cJSON_AddItemToArray(json,read_tweet_json(ids[i]));
     }
+    free_user(&user);
     free(ids);
     return json;
 }
@@ -196,9 +199,12 @@ cJSON* unread_tweets(const char* username){
 int is_user_follows_that(const char* user,const char* that){
     User tmp = read_user(user);
     for(UserList* i = tmp.followings;i!=NULL; i = i->next){
-        if(strcmp(that,i->username)==0)
+        if(strcmp(that,i->username)==0){
+            free_user(&tmp);
             return 1;
+        }
     }
+    free_user(&tmp);
     return 0;
 }
 
@@ -232,6 +238,7 @@ cJSON* make_user_for_client(const char* username,const char* client_username){
         cJSON_AddItemToArray(tweet_arr,read_tweet_json(ids[i]));
     }
     cJSON_AddItemToObject(json,"allTweets",tweet_arr);
+    free_user(&user);
     free(ids);
     return json;
 }
@@ -275,9 +282,10 @@ void delete_tweet(const char* username,int id){
 int is_user_own_tweet(const char* username,int id){
     User user = read_user(username);
     for(TweetList* i=user.personalTweets;i!=NULL;i = i->next){
-        if(i->id == id)
+        if(i->id == id){
             free_user(&user);
             return 1;
+        }
     }
     free_user(&user);
     return 0;

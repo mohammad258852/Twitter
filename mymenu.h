@@ -32,6 +32,7 @@ void follow(User* user);
 void change_password_menu();
 void set_bio_menu();
 void search_menu();
+void print_user(cJSON* json);
 void tweet_profile_menu();
 void personal_area_menu();
 int request_delete(User* user,int number);
@@ -159,7 +160,7 @@ void signup_menu(){
         printw("\n Signed up Successfully...\n");
         attroff(COLOR_PAIR(SUCCESS_COLOR));
         press_key_to_continue();
-        login_menu();
+        //login_menu();
     }
     else{
         attron(COLOR_PAIR(ERROR_COLOR));
@@ -401,7 +402,7 @@ void search_menu(){
     free(response);
     char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
 
-    if(strcmp(type,"Profile")!=0){
+    if(strcmp(type,"List")!=0){
         attron(COLOR_PAIR(ERROR_COLOR));
         mvprintw(LINES/2,4,cJSON_GetObjectItem(json,"message")->valuestring);
         attroff(COLOR_PAIR(ERROR_COLOR));
@@ -410,13 +411,72 @@ void search_menu(){
         cJSON_Delete(json);
         return;
     }
+    
+    cJSON* userslist = cJSON_GetObjectItem(json,"message");
+    int users_number = cJSON_GetArraySize(userslist);
+    //this is part can be deleted
+    if(users_number==1){
+        print_user(cJSON_GetArrayItem(userslist,0));
+        cJSON_Delete(json);
+        return;
+    }
+
+    ITEM** items = (ITEM**)calloc(users_number+2,sizeof(ITEM*));
+    for(int i=0;i<users_number;i++){
+        cJSON* ith_user = cJSON_GetArrayItem(userslist,i);
+        items[i] = new_item(cJSON_GetObjectItem(ith_user,"username")->valuestring,"");
+    }
+    items[users_number] = new_item("back","");
+    MENU* menu = new_menu(items);
+
+    int repeat = 1;
+    while (repeat)
+    {
+        clear();
+        post_menu(menu);
+        mvprintw(LINES-2,0,"Use Arow key to move and Use Enter to Select");
+        refresh();
+        int ch;
+        int choice = -1;
+        while(choice==-1 && (ch=getch())){
+            switch (ch)
+            {
+            case KEY_DOWN:
+                if(menu_driver(menu,REQ_NEXT_ITEM)!=E_OK)
+                    beep();
+                break;
+            case KEY_UP:
+                if(menu_driver(menu,REQ_PREV_ITEM)!=E_OK)
+                    beep();
+                break;
+            case 10:
+                choice = item_index(current_item(menu));
+                break;
+            }
+        }
+        unpost_menu(menu);
+        if(choice==users_number){
+            repeat = 0;
+        }
+        else{
+            print_user(cJSON_GetArrayItem(userslist,choice));
+        }
+    }
+    for(int i=0;i<users_number+1;i++){
+        free_item(items[i]);
+    }
+    free_menu(menu);
+    cJSON_Delete(json);
+}
+
+void print_user(cJSON* json){
     clear();
     int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
     mvprintw(help_y+2,0,"press u to unfollow,f to follow, and q to quit");
     refresh();
-    User user = make_user_json(cJSON_GetObjectItem(json,"message"));
+    User user = make_user_json(json);
     
     int user_win_x = 0,
         user_win_y = 0;
@@ -524,7 +584,7 @@ void search_menu(){
             wprint_comment(comment_subwin,user.tweets+current_tweet,current_comment);
         }
     }
-    cJSON_Delete(json);
+    cJSON_SetValuestring(cJSON_GetObjectItem(json,"followStatus"),(user.following_status?"Followed":"NotFollowed"));
     delwin(user_subwin);
     delwin(user_win);
     delwin(tweet_subwin);

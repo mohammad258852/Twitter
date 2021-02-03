@@ -229,19 +229,14 @@ void search(int sock,const char* command){
         logout("Invalid token");
         return;
     }
-    if(!check_username_exist(username)){
-        send_response(sock,"Error","This user doesn't exist");
-        logoutf("user %s doesn't exist",username);
+    cJSON* json = advance_search(username,token->username);
+    if(cJSON_GetArraySize(json)<=0){
+        send_response(sock,"Error","No user found");
+        logoutf("no user match %s",username);
         return;
     }
-    if(strcmp(username,token->username)==0){
-        send_response(sock,"Error","Why do you want to search yourself");
-        logoutf("user %s searched him/herself",username);
-        return;
-    }
-    cJSON* json = make_user_for_client(username,token->username);
-    send_response_json(sock,"Profile",json);
-    logoutf("send %s data to %s",username,token->username);
+    send_response_json(sock,"List",json);
+    logoutf("send users data to %s",token->username);
     cJSON_Delete(json);
 }
 

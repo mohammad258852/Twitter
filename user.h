@@ -2,6 +2,7 @@
 #define USERH
 
 #include<string.h>
+#include<dirent.h>
 #include"tweet.h"
 #include"consts.h"
 #include"cJSON.h"
@@ -28,6 +29,7 @@ int add_tweet_to_user(const char* username,int id);
 void free_user(User* user);
 cJSON* unread_tweets(const char*);
 cJSON* make_user_for_client(const char*,const char*);
+cJSON* advance_search(const char* patern,const char* client_username);
 void user_follow_that(const char*,const char*);
 void user_unfollow_that(const char*,const char*);
 void delete_tweet(const char*,int);
@@ -171,7 +173,7 @@ cJSON* unread_tweets(const char* username){
                 total++;
             }
         }
-        free(&following);
+        free_user(&following);
     }
     int* ids = malloc(total * sizeof(int));
     int* iter = ids;
@@ -241,6 +243,29 @@ cJSON* make_user_for_client(const char* username,const char* client_username){
     free_user(&user);
     free(ids);
     return json;
+}
+
+cJSON* advance_search(const char* patern,const char* client_username){
+    cJSON* arr = cJSON_CreateArray();
+    DIR* dir;
+    struct dirent* entr;
+    if((dir = opendir(USERSFILEPATH))!=NULL){
+        while((entr = readdir(dir))!=NULL){
+            if(!string_end_with(entr->d_name,".json")){
+                continue;
+            }
+            char user[MAXUSERNAME];
+            strcpy(user,entr->d_name);
+            user[strlen(user)-5] = '\0';
+            if(strcmp(user,client_username)==0){
+                continue;
+            }
+            if(strstr(user,patern)!=NULL){
+                cJSON_AddItemToArray(arr,make_user_for_client(user,client_username));
+            }
+        }
+    }
+    return arr;
 }
 
 void user_follow_that(const char* username,const char* thatname){

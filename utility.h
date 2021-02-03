@@ -57,5 +57,20 @@ int string_start_with(const char* str,const char* start){
     return 0;
 }
 
+int string_end_with(const char* str,const char* end){
+    int i = strlen(str)-1;
+    int j = strlen(end)-1;
+    while(i>=0 && j>=0){
+        if(str[i]!=end[j]){
+            return 0;
+        }
+        j--;
+        i--;
+    }
+    if(j<0)
+        return 1;
+    return 0;
+}
+
 
 #endif

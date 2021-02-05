@@ -40,6 +40,7 @@ int  is_valid_username(const char* us);
 int  is_valid_password(const char* ps);
 int  is_valid_text(const char* tx);
 int  is_valid_bio(const char* bi);
+void retweet(int id);
 
 
 void start_menu(){
@@ -474,7 +475,7 @@ void print_user(cJSON* json){
     int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
-    mvprintw(help_y+2,0,"press u to unfollow,f to follow, and q to quit");
+    mvprintw(help_y+2,0,"press u to unfollow,f to follow, r to retweet, and q to quit");
     refresh();
     User user = make_user_json(json);
     
@@ -568,6 +569,10 @@ void print_user(cJSON* json){
             break;
         case 'q':
             continue_running = 0;
+            break;
+        case 'r':
+            if(current_tweet>=0 && current_tweet<user.tweets_number)
+                retweet(user.tweets[current_tweet].id);
             break;
         }
         if(user_change){
@@ -1088,7 +1093,7 @@ void refresh_tweet(){
     int help_y = LINES - 3;
     mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
     mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
-    mvprintw(help_y+2,0,"press l to like,c to comment, and q to quit");
+    mvprintw(help_y+2,0,"press l to like,c to comment, r to retweet,and q to quit");
     refresh();
     WINDOW* tweets_id_win = newwin( tweets_id_win_h,tweets_id_win_w,
                                     tweets_id_win_y,tweets_id_win_x);
@@ -1187,6 +1192,9 @@ void refresh_tweet(){
             break;
         case 'q':
             continue_runnig = 0;
+            break;
+        case 'r':
+            retweet(tweets[current_tweet].id);
             break;
         }
         if(tweet_change==1){
@@ -1317,6 +1325,12 @@ int is_valid_bio(const char* bi){
     if(strlen(bi)==0)
         return 0;
     return 1;
+}
+
+void retweet(int id){
+    char* response;
+    send_requestf(&response,"retweet %s,%d\n",auth,id);
+    free(response);
 }
 
 #endif

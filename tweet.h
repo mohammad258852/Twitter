@@ -10,6 +10,7 @@ struct __tweet
 {
     int id;
     char author[MAX];
+    char retweeter[MAX];
     char content[MAXTEXT];
     Comment *comments;
     int likes;
@@ -20,6 +21,7 @@ Tweet make_tweet_json(cJSON* json){
     Tweet tmp;
     tmp.id = cJSON_GetObjectItem(json,"id")->valueint;
     strcpy(tmp.author,cJSON_GetObjectItem(json,"author")->valuestring);
+    strcpy(tmp.retweeter,cJSON_GetObjectItem(json,"retweeter")->valuestring);
     strcpy(tmp.content,cJSON_GetObjectItem(json,"content")->valuestring);
     tmp.likes = cJSON_GetObjectItem(json,"likes")->valueint;
     tmp.comment_number = cJSON_GetArraySize(cJSON_GetObjectItem(json,"comments"));
@@ -66,7 +68,15 @@ void wprint_tweet(WINDOW* win,Tweet* tweet){
         wattroff(win,COLOR_PAIR(ERROR_COLOR));
     }
     else{
-        wprintw(win,"author:%s\n",tweet->author,tweet->id);
+        if(strcmp(tweet->retweeter,"")==0){
+            wprintw(win,"author:%s\n",tweet->author,tweet->id);
+        }
+        else{
+            wprintw(win,"author:%s",tweet->author);
+            wattron(win,COLOR_PAIR(RETWEETER_COLOR));
+            wprintw(win,"(%s)\n",tweet->retweeter);
+            wattroff(win,COLOR_PAIR(RETWEETER_COLOR));
+        }
         wattron(win,COLOR_PAIR(TWEET_COLOR));
         wprintw(win,"%s\n",tweet->content);
         wattroff(win,COLOR_PAIR(TWEET_COLOR));
@@ -126,6 +136,7 @@ void free_tweet(Tweet tweet){
 void tweet_copy(Tweet* dest,const Tweet* src){
     dest->id = src->id;
     strcpy(dest->author,src->author);
+    strcpy(dest->retweeter,src->retweeter);
     strcpy(dest->content,src->content);
     dest->likes = src->likes;
     dest->comment_number = src->comment_number;

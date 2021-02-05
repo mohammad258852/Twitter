@@ -26,6 +26,7 @@ int main(){
     init_pair(3,COLOR_BLACK,COLOR_GREEN);//success
     init_pair(4,COLOR_BLACK,COLOR_CYAN);//tweet color
     init_pair(5,COLOR_BLACK,COLOR_CYAN);//comment color
+    init_pair(6,COLOR_GREEN,COLOR_BLACK);//retweeter color
     //end of colors
     start_menu();
 

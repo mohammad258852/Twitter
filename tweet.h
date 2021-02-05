@@ -28,7 +28,6 @@ Tweet json2tweet(cJSON*);
 int is_user_read_tweet(const char*,int);
 void user_read_tweet(const char*,int);
 void delete_tweet_readers(int);
-void sort_tweet(int*,size_t);
 int is_user_like_tweet(const char*,int);
 void user_like_tweet(const char*,int);
 void user_unlike_tweet(const char*,int);
@@ -198,18 +197,6 @@ void delete_tweet_readers(int id){
         return;
     }
     remove(path);
-}
-
-int tweet_cmp(const void* x,const void* y){
-    Tweet xx = read_tweet(*(int*)x);
-    Tweet yy = read_tweet(*(int*)y);
-    free_tweet(&xx);
-    free_tweet(&yy);
-    return (xx.time - yy.time);
-}
-
-void sort_tweet(int* ids,size_t n){
-    qsort(ids,n,sizeof(int),tweet_cmp);
 }
 
 int is_user_like_tweet(const char* username,int id){

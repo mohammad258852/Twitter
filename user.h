@@ -8,6 +8,7 @@
 #include"cJSON.h"
 #include"userlist.h"
 #include"tweetlist.h"
+#include"idlist.h"
 
 typedef struct
 {
@@ -17,6 +18,7 @@ typedef struct
     UserList* followers;
     UserList* followings;
     TweetList* personalTweets;
+    TweetList* retweets;
 } User;
 
 cJSON* user2json(const User* const user);
@@ -26,14 +28,18 @@ User read_user(const char* username);
 int check_username_exist(const char* const username);
 int create_user(const char* username,const char* password);
 int add_tweet_to_user(const char* username,int id);
+int add_retweet_to_user(const char* username,int id);
+int delete_retweet_from_user(const char* username,int id);
 void free_user(User* user);
 cJSON* unread_tweets(const char*);
+int is_user_follows_that(const char* user,const char* that);
 cJSON* make_user_for_client(const char*,const char*);
 cJSON* advance_search(const char* patern,const char* client_username);
 void user_follow_that(const char*,const char*);
 void user_unfollow_that(const char*,const char*);
 void delete_tweet(const char*,int);
 int is_user_own_tweet(const char*,int);
+int is_user_retweet_tweet(const char*,int);
 
 cJSON* user2json(const User* const user){
     cJSON* user_json = cJSON_CreateObject();
@@ -59,6 +65,12 @@ cJSON* user2json(const User* const user){
     }
     cJSON_AddItemToObject(user_json,"personalTweets",tweets_json);
 
+    cJSON* retweets_json = cJSON_CreateArray();
+    for(TweetList* i=user->retweets;i!=NULL;i = i->next){
+        cJSON_AddItemToArray(retweets_json,cJSON_CreateNumber(i->id));
+    }
+    cJSON_AddItemToObject(user_json,"retweets",retweets_json);
+
     return user_json;
 }
 
@@ -73,6 +85,7 @@ User json2user(const cJSON* json){
     tmp.followings = make_user_list(cJSON_GetObjectItem(json,"followings"));
 
     tmp.personalTweets = make_tweet_list(cJSON_GetObjectItem(json,"personalTweets"));
+    tmp.retweets = make_tweet_list(cJSON_GetObjectItem(json,"retweets"));
 
     return tmp;
 }
@@ -144,6 +157,7 @@ int create_user(const char* username,const char* password){
     tmp.followers = NULL;
     tmp.followings = NULL;
     tmp.personalTweets = NULL;
+    tmp.retweets = NULL;
 
     write_user(&tmp);
 
@@ -157,10 +171,55 @@ int add_tweet_to_user(const char* username,int id){
     free_user(&user);
 }
 
+int add_retweet_to_user(const char* username,int id){
+    User user = read_user(username);
+    add_tweet_to_list(&user.retweets,id);
+    write_user(&user);
+    free_user(&user);
+    system("mkdir -p "RETWEETPATH);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,RETWEETPATH"%d.txt",id);
+    FILE* file = fopen(path,"a");
+    if(file==NULL){
+        return 0;
+    }
+    fprintf(file,"%s\n",username);
+    fclose(file);
+    return 1;
+}
+
+int delete_retweet_from_user(const char* username,int id){
+    User user = read_user(username);
+    delete_tweet_from_list(&user.retweets,id);
+    write_user(&user);
+    free_user(&user);
+    system("mkdir -p "RETWEETPATH);
+    char path[MAXFILENAMESIZE];
+    sprintf(path,RETWEETPATH"%d.txt",id);
+    FILE* file = fopen(path,"r");
+    FILE* tmp_file = fopen(RETWEETPATH"tmp.txt","w");
+    if(file==NULL || tmp_file==NULL){
+        return 0;
+    }
+    char fuser[MAXUSERNAME];
+    while(fscanf(file,"%s",fuser)!=EOF){
+        if(strcmp(username,fuser)==0){
+            continue;
+        }
+        fprintf(tmp_file,"%s\n",fuser);
+    }
+    fclose(file);
+    fclose(tmp_file);
+    remove(path);
+    rename(RETWEETPATH"tmp.txt",path);
+    return 1;
+}
+
 void free_user(User* user){
     free_userlist(user->followers);
     free_userlist(user->followings);
     free_tweetlist(user->personalTweets);
+    free_tweetlist(user->retweets);
 }
 
 cJSON* unread_tweets(const char* username){
@@ -173,17 +232,43 @@ cJSON* unread_tweets(const char* username){
                 total++;
             }
         }
+        for(TweetList* j=following.retweets; j!=NULL; j=j->next){
+            if(tweet_exist(j->id)){
+                Tweet tweet = read_tweet(j->id);
+                if(!is_user_follows_that(username,tweet.author)){
+                    if(!is_user_read_tweet(username,j->id)){
+                        total++;
+                    }
+                }
+                free_tweet(&tweet);
+            }
+        }
         free_user(&following);
     }
-    int* ids = malloc(total * sizeof(int));
-    int* iter = ids;
+    IdList* ids = malloc(total * sizeof(IdList));
+    IdList* iter = ids;
     for(UserList* i = user.followings;i!=NULL; i=i->next){
         User following = read_user(i->username);
         for(TweetList* j=following.personalTweets; j!=NULL; j=j->next){
             if(!is_user_read_tweet(username,j->id)){
                 user_read_tweet(username,j->id);
-                *iter = j->id;
+                iter->id = j->id;
+                strcpy(iter->retweeter,"");
                 iter++;
+            }
+        }
+        for(TweetList* j=following.retweets; j!=NULL; j=j->next){
+            if(tweet_exist(j->id)){
+                Tweet tweet = read_tweet(j->id);
+                if(!is_user_follows_that(username,tweet.author)){
+                    if(!is_user_read_tweet(username,j->id)){
+                        user_read_tweet(username,j->id);
+                        iter->id = j->id;
+                        strcpy(iter->retweeter,following.username);
+                        iter++;
+                    }
+                }
+                free_tweet(&tweet);
             }
         }
         free_user(&following);
@@ -191,7 +276,9 @@ cJSON* unread_tweets(const char* username){
     sort_tweet(ids,total);
     cJSON* json = cJSON_CreateArray();
     for(int i=0;i<total;i++){
-        cJSON_AddItemToArray(json,read_tweet_json(ids[i]));
+        cJSON* tweet_json = read_tweet_json(ids[i].id);
+        cJSON_AddItemToObject(tweet_json,"retweeter",cJSON_CreateString(ids[i].retweeter));
+        cJSON_AddItemToArray(json,tweet_json);
     }
     free_user(&user);
     free(ids);
@@ -229,15 +316,32 @@ cJSON* make_user_for_client(const char* username,const char* client_username){
         }
     }
     int tweets_number = count_tweetlist(user.personalTweets);
-    int* ids = malloc(tweets_number*sizeof(int));
-    int* iter = ids;
-    for(TweetList* i=user.personalTweets;i!=NULL;i = i->next,iter++){
-        *iter = i->id;
+    int retweets_number = 0;
+    for(TweetList* i=user.retweets;i!=NULL;i = i->next){
+        if(tweet_exist(i->id)){
+            retweets_number++;
+        }
     }
-    sort_tweet(ids,tweets_number);
+    IdList* ids = malloc((tweets_number+retweets_number)*sizeof(IdList));
+    IdList* iter = ids;
+    for(TweetList* i=user.personalTweets;i!=NULL;i = i->next,iter++){
+        iter->id = i->id;
+        strcpy(iter->retweeter,"");
+    }
+    for(TweetList* i=user.retweets;i!=NULL;i = i->next){
+        if(tweet_exist(i->id)){
+            iter->id = i->id;
+            Tweet tweet = read_tweet(i->id);
+            strcpy(iter->retweeter,username);
+            free_tweet(&tweet);
+        }
+    }
+    sort_tweet(ids,tweets_number+retweets_number);
     cJSON* tweet_arr = cJSON_CreateArray();
-    for(int i=0;i<tweets_number;i++){
-        cJSON_AddItemToArray(tweet_arr,read_tweet_json(ids[i]));
+    for(int i=0;i<tweets_number+retweets_number;i++){
+        cJSON* tweet_json = read_tweet_json(ids[i].id);
+        cJSON_AddItemToObject(tweet_json,"retweeter",cJSON_CreateString(ids[i].retweeter));
+        cJSON_AddItemToArray(tweet_arr,tweet_json);
     }
     cJSON_AddItemToObject(json,"allTweets",tweet_arr);
     free_user(&user);
@@ -293,6 +397,8 @@ void user_unfollow_that(const char* username,const char* thatname){
 void delete_tweet(const char* username,int id){
     User user = read_user(username);
     delete_tweet_from_list(&user.personalTweets,id);
+    write_user(&user);
+    free_user(&user);
     char path[MAXFILENAMESIZE];
     sprintf(path,TWEETPATH"%d.json",id);
     remove(path);
@@ -300,13 +406,33 @@ void delete_tweet(const char* username,int id){
     remove(path);
     sprintf(path,TWEETREADPATH"%d.txt",id);
     remove(path);
-    write_user(&user);
-    free_user(&user);
+    sprintf(path,RETWEETPATH"%d.txt",id);
+    FILE* file = fopen(path,"r");
+    if(file!=NULL){
+        char fuser[MAXUSERNAME];
+        while(fscanf(file,"%s",fuser)!=EOF){
+            delete_retweet_from_user(fuser,id);
+        }
+        fclose(file);
+    }
+    remove(path);
 }
 
 int is_user_own_tweet(const char* username,int id){
     User user = read_user(username);
     for(TweetList* i=user.personalTweets;i!=NULL;i = i->next){
+        if(i->id == id){
+            free_user(&user);
+            return 1;
+        }
+    }
+    free_user(&user);
+    return 0;
+}
+
+int is_user_retweet_tweet(const char* username,int id){
+    User user = read_user(username);
+    for(TweetList* i=user.retweets;i!=NULL;i = i->next){
         if(i->id == id){
             free_user(&user);
             return 1;

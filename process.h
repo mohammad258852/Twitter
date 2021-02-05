@@ -14,7 +14,6 @@
 #define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 
 void process(int);
-int string_start_with(const char* str,const char* start);
 void signup(int,const char*);
 void login(int ,const char*);
 void refresh(int ,const char*);
@@ -29,6 +28,7 @@ void set_bio(int,const char*);
 void profile(int,const char*);
 void change_password(int,const char*);
 void delete_request(int,const char*);
+void retweet(int,const char*);
 
 void process(int sock){
     char* request;
@@ -38,12 +38,12 @@ void process(int sock){
                                 "refresh","logout","like",
                                 "comment","search","follow",
                                 "unfollow","set bio","profile",
-                                "change password","delete"};
+                                "change password","delete","retweet"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
                                     unfollow,set_bio,profile,
-                                    change_password,delete_request};
+                                    change_password,delete_request,retweet};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -356,14 +356,53 @@ void delete_request(int sock,const char* command){
         logout("Invalid token");
         return;
     }
-    if(!is_user_own_tweet(token->username,id)){
+    if(!is_user_own_tweet(token->username,id) && !is_user_retweet_tweet(token->username,id)){
         send_response(sock,"Error","This tweet is not yours");
         logoutf("user %s does not own tweet %d",token->username,id);
         return;
     }
-    delete_tweet(token->username,id);
-    send_response(sock,"Successful","Tweet deleted");
-    logoutf("Tweet %d from %s deleted",id,token->username);
+    if(is_user_own_tweet(token->username,id)){
+        delete_tweet(token->username,id);
+        send_response(sock,"Successful","Tweet deleted");
+        logoutf("Tweet %d from %s deleted",id,token->username);
+        return;
+    }
+    if(is_user_retweet_tweet(token->username,id)){
+        delete_retweet_from_user(token->username,id);
+        send_response(sock,"Successful","Retweet deleted");
+        logoutf("Retweet %d from %s deleted",id,token->username);
+        return;
+    }
+}
+
+void retweet(int sock,const char* command){
+    char tok[TOKENSIZE+1];
+    int id;
+    sscanf(command,"retweet %[^,],%d",tok,&id);
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    if(!tweet_exist(id)){
+        send_response(sock,"Error","Tweet does not exist");
+        logoutf("Tweet %d does not exist",id);
+        return;
+    }
+    if(is_user_own_tweet(token->username,id)){
+        send_response(sock,"Error","You can not retweet your own tweet");
+        logoutf("user %s owns tweet %d",token->username,id);
+        return;
+    }
+    if(is_user_retweet_tweet(token->username,id)){
+        send_response(sock,"Error","You already retweet this tweet");
+        logoutf("user %s already retweets tweet %d",token->username,id);
+        return;
+    }
+    add_retweet_to_user(token->username,id);
+    send_response(sock,"Successful","Tweet retweeted");
+    logoutf("user %s retweets tweet %d",token->username,id);
 }
 
 #endif

@@ -9,7 +9,7 @@
 typedef struct
 {
     char tok[TOKENSIZE+1];
-    char username[MAXUSERNAME];
+    char username[MAXUSERNAME+1];
 }Token;
 
 typedef struct __tokenlist{

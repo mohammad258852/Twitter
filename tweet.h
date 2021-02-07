@@ -11,8 +11,8 @@
 typedef struct 
 {
     int id;
-    char author[MAXUSERNAME];
-    char content[MAXTEX];
+    char author[MAXUSERNAME+1];
+    char content[MAXTEX+1];
     unsigned likes;
     time_t time;
     CommentList* comments;
@@ -162,7 +162,7 @@ int add_tweet(const char* username,const char* content){
 int is_user_read_tweet(const char* username,int id){
     char path[MAXFILENAMESIZE];
     sprintf(path,TWEETREADPATH"%d.txt",id);
-    char user[MAXUSERNAME];
+    char user[MAXUSERNAME+1];
     FILE* file = fopen(path,"r");
     if(file==NULL){
         return 0;
@@ -202,7 +202,7 @@ void delete_tweet_readers(int id){
 int is_user_like_tweet(const char* username,int id){
     char path[MAXFILENAMESIZE];
     sprintf(path,TWEETLIKEPATH"%d.txt",id);
-    char user[MAXUSERNAME];
+    char user[MAXUSERNAME+1];
     FILE* file = fopen(path,"r");
     if(file==NULL){
         return 0;
@@ -245,7 +245,7 @@ void user_unlike_tweet(const char* username,int id){
     if(file==NULL || tmp_file==NULL){
         return;
     }
-    char user[MAXUSERNAME];
+    char user[MAXUSERNAME+1];
     while(fscanf(file,"%s",user)!=EOF){
         if(strcmp(username,user)==0){
             continue;

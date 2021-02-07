@@ -7,7 +7,7 @@
 #include"consts.h"
 
 typedef struct __userlist{
-    char username[MAXUSERNAME];
+    char username[MAXUSERNAME+1];
     struct __userlist* next;
 } UserList ;
 

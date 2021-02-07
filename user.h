@@ -12,9 +12,9 @@
 
 typedef struct
 {
-    char username[MAXUSERNAME];
-    char password[MAXPASSWORD];
-    char bio[MAXBIO];
+    char username[MAXUSERNAME+1];
+    char password[MAXPASSWORD+1];
+    char bio[MAXBIO+1];
     UserList* followers;
     UserList* followings;
     TweetList* personalTweets;
@@ -201,7 +201,7 @@ int delete_retweet_from_user(const char* username,int id){
     if(file==NULL || tmp_file==NULL){
         return 0;
     }
-    char fuser[MAXUSERNAME];
+    char fuser[MAXUSERNAME+1];
     while(fscanf(file,"%s",fuser)!=EOF){
         if(strcmp(username,fuser)==0){
             continue;
@@ -358,7 +358,7 @@ cJSON* advance_search(const char* patern,const char* client_username){
             if(!string_end_with(entr->d_name,".json")){
                 continue;
             }
-            char user[MAXUSERNAME];
+            char user[MAXUSERNAME+1];
             strcpy(user,entr->d_name);
             user[strlen(user)-5] = '\0';
             if(strcmp(user,client_username)==0){
@@ -409,7 +409,7 @@ void delete_tweet(const char* username,int id){
     sprintf(path,RETWEETPATH"%d.txt",id);
     FILE* file = fopen(path,"r");
     if(file!=NULL){
-        char fuser[MAXUSERNAME];
+        char fuser[MAXUSERNAME+1];
         while(fscanf(file,"%s",fuser)!=EOF){
             delete_retweet_from_user(fuser,id);
         }

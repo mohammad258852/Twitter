@@ -11,11 +11,11 @@
 #define MAXQUEU 0
 #define MAXCOMMANDLENGTH 20
 #define TOKENSIZE 20
-#define MAXUSERNAME 70
-#define MAXPASSWORD 70
+#define MAXUSERNAME 16
+#define MAXPASSWORD 16
 #define MAXBIO 70
-#define MAXTEX 350
-#define MAXFILENAMESIZE (MAXUSERNAME + 20)
+#define MAXTEX 220
+#define MAXFILENAMESIZE (MAXUSERNAME + 100)
 
 #define USERSFILEPATH "Resource/Users/"
 #define TWEETPATH "Resource/Tweets/"

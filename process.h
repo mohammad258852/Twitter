@@ -72,10 +72,90 @@ int isvalid_password_char(char t){
     return (isalnum(t) || t=='@' || t=='$' || t=='&');
 }
 
+int isvalid_bio_char(char t){
+    if(t=='\0' || t=='\n')
+        return 0;
+    return 1;
+}
+
+int isvalid_text_char(char t){
+    if(t=='\0' || t=='\n')
+        return 0;
+    return 1;
+}
+
+int isvalid_username(char* us){
+    int i;
+    for(i=0;us[i]!='\0';i++){
+        if(i>=MAXUSERNAME){
+            return 0;
+        }
+        if(!isvalid_username_char(us[i]))
+            return 0;
+    }
+    if(i==0 || i>MAXUSERNAME)
+        return 0;
+    return 1;
+}
+
+int isvalid_password(char* pw){
+    int i;
+    for(i=0;pw[i]!='\0';i++){
+        if(i>=MAXPASSWORD){
+            return 0;
+        }
+        if(!isvalid_password_char(pw[i]))
+            return 0;
+    }
+    if(i==0 || i>MAXPASSWORD)
+        return 0;
+    return 1;
+}
+
+int isvalid_bio(char* bio){
+    int i;
+    for(i=0;bio[i]!='\0';i++){
+        if(i>=MAXBIO)
+            return 0;
+        if(!isvalid_bio_char(bio[i]))
+            return 0;
+    }
+    if(i==0 || i>MAXBIO)
+        return 0;
+    return 1;
+}
+
+int isvalid_text(char* text){
+    int i;
+    for(i=0;text[i]!='\0';i++){
+        if(i>=MAXTEX)
+            return 0;
+        if(!isvalid_text_char(text[i]))
+            return 0;
+    }
+    if(i==0 || i>MAXTEX)
+        return 0;
+    return 1;
+}
+
 void signup(int sock,const char* command){
-    char username[MAXUSERNAME];
-    char password[MAXPASSWORD];
-    sscanf(command,"signup %[^,],%[^\n]",username,password);
+    char username[MAXUSERNAME+1];
+    char password[MAXPASSWORD+1];
+    if(sscanf(command,"signup %[^,],%[^\n]",username,password)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_username(username)){
+        send_response(sock,"Error","Bad username format");
+        logout("Bad username format");
+        return;
+    }
+    if(!isvalid_password(password)){
+        send_response(sock,"Error","Bad password format");
+        logout("Bad password format");
+        return;
+    }
 
     int successful = create_user(username,password);
     if(successful){
@@ -88,10 +168,23 @@ void signup(int sock,const char* command){
     }
 }
 void login(int sock,const char* command){
-    char username[MAXUSERNAME];
-    char password[MAXPASSWORD];
-    sscanf(command,"login %[^,],%[^\n]",username,password);
-
+    char username[MAXUSERNAME+1];
+    char password[MAXPASSWORD+1];
+    if(sscanf(command,"login %[^,],%[^\n]",username,password)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_username(username)){
+        send_response(sock,"Error","Bad username format");
+        logout("Bad username format");
+        return;
+    }
+    if(!isvalid_password(password)){
+        send_response(sock,"Error","Bad password format");
+        logout("Bad password format");
+        return;
+    }
     if(!check_username_exist(username)){
         send_response(sock,"Error","username doesn't exist");
         logoutf("usename %s doesn't exist",username);
@@ -117,9 +210,17 @@ void login(int sock,const char* command){
 
 void send_tweet(int sock,const char* commad){
     char tok[TOKENSIZE+1];
-    char content[MAXTEX];
-    sscanf(commad,"send tweet %[^,],%[^\n]",tok,content);
-
+    char content[MAXTEX+1];
+    if(sscanf(commad,"send tweet %[^,],%[^\n]",tok,content)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_text(content)){
+        send_response(sock,"Error","Bad text format");
+        logout("Bad text format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -139,7 +240,11 @@ void send_tweet(int sock,const char* commad){
 
 void refresh(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    sscanf(command,"refresh %[^\n]",tok);
+    if(sscanf(command,"refresh %[^\n]",tok)!=1){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -154,7 +259,11 @@ void refresh(int sock,const char* command){
 
 void loggout(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    sscanf(command,"logout %[^\n]",tok);
+    if(sscanf(command,"logout %[^\n]",tok)!=1){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -174,7 +283,11 @@ void loggout(int sock,const char* command){
 void like(int sock,const char* command){
     char tok[TOKENSIZE+1];
     int id;
-    sscanf(command,"like %[^,],%d",tok,&id);
+    if(sscanf(command,"like %[^,],%d",tok,&id)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -201,8 +314,17 @@ void like(int sock,const char* command){
 void comment(int sock,const char* command){
     char tok[TOKENSIZE+1];
     int id;
-    char comm[MAXTEX];
-    sscanf(command,"comment %[^,],%d,%[^\n]",tok,&id,comm);
+    char comm[MAXTEX+1];
+    if(sscanf(command,"comment %[^,],%d,%[^\n]",tok,&id,comm)!=3){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_text(comm)){
+        send_response(sock,"Error","Bad text format");
+        logout("Bad text format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid Token");
@@ -221,8 +343,17 @@ void comment(int sock,const char* command){
 
 void search(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    char username[MAXUSERNAME];
-    sscanf(command,"search %[^,],%[^\n]",tok,username);
+    char username[MAXUSERNAME+1];
+    if(sscanf(command,"search %[^,],%[^\n]",tok,username)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_username(username)){
+        send_response(sock,"Error","Bad username format");
+        logout("Bad username format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -242,8 +373,17 @@ void search(int sock,const char* command){
 
 void follow(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    char username[MAXUSERNAME];
-    sscanf(command,"follow %[^,],%s",tok,username);
+    char username[MAXUSERNAME+1];
+    if(sscanf(command,"follow %[^,],%s",tok,username)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_username(username)){
+        send_response(sock,"Error","Bad username format");
+        logout("Bad username format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -266,8 +406,17 @@ void follow(int sock,const char* command){
 }
 void unfollow(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    char username[MAXUSERNAME];
-    sscanf(command,"unfollow %[^,],%s",tok,username);
+    char username[MAXUSERNAME+1];
+    if(sscanf(command,"unfollow %[^,],%s",tok,username)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_username(username)){
+        send_response(sock,"Error","Bad username format");
+        logout("Bad username format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -291,8 +440,17 @@ void unfollow(int sock,const char* command){
 
 void set_bio(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    char bio[MAXBIO];
-    sscanf(command,"set bio %[^,],%[^\n]",tok,bio);
+    char bio[MAXBIO+1];
+    if(sscanf(command,"set bio %[^,],%[^\n]",tok,bio)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_bio(bio)){
+        send_response(sock,"Error","Bad bio format");
+        logout("Bad bio format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -309,7 +467,11 @@ void set_bio(int sock,const char* command){
 
 void profile(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    sscanf(command,"profile %[^\n]",tok);
+    if(sscanf(command,"profile %[^\n]",tok)!=1){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -324,9 +486,18 @@ void profile(int sock,const char* command){
 
 void change_password(int sock,const char* command){
     char tok[TOKENSIZE+1];
-    char new_password[MAXPASSWORD];
-    char cur_password[MAXPASSWORD];
-    sscanf(command,"change password %[^,],%[^,],%[^\n]",tok,cur_password,new_password);
+    char new_password[MAXPASSWORD+1];
+    char cur_password[MAXPASSWORD+1];
+    if(sscanf(command,"change password %[^,],%[^,],%[^\n]",tok,cur_password,new_password)!=3){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_password(cur_password) || !isvalid_password(new_password)){
+        send_response(sock,"Error","Bad password format");
+        logout("Bad password format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -349,7 +520,11 @@ void change_password(int sock,const char* command){
 void delete_request(int sock,const char* command){
     char tok[TOKENSIZE+1];
     int id;
-    sscanf(command,"delete %[^,],%d",tok,&id);
+    if(sscanf(command,"delete %[^,],%d",tok,&id)!=2){
+        send_response(sock,"Error","Bad password format");
+        logout("Bad password format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");
@@ -378,7 +553,11 @@ void delete_request(int sock,const char* command){
 void retweet(int sock,const char* command){
     char tok[TOKENSIZE+1];
     int id;
-    sscanf(command,"retweet %[^,],%d",tok,&id);
+    if(scanf(command,"retweet %[^,],%d",tok,&id)!=2){
+        send_response(sock,"Error","Bad password format");
+        logout("Bad password format");
+        return;
+    }
     Token* token = validate_token(tok);
     if(token==NULL){
         send_response(sock,"Error","Invalid token");

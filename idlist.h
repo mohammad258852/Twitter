@@ -8,7 +8,7 @@
 typedef struct 
 {
     int id;
-    char retweeter[MAXUSERNAME];
+    char retweeter[MAXUSERNAME+1];
 } IdList;
 
 int tweet_cmp(const void* x,const void* y){

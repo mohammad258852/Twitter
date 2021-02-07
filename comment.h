@@ -5,8 +5,8 @@
 #include"consts.h"
 
 typedef struct{
-    char author[MAXUSERNAME];
-    char content[MAXTEX];
+    char author[MAXUSERNAME+1];
+    char content[MAXTEX+1];
 } Comment;
 
 cJSON* comment2json(const Comment*);

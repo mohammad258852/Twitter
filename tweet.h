@@ -9,9 +9,9 @@ typedef
 struct __tweet
 {
     int id;
-    char author[MAX];
-    char retweeter[MAX];
-    char content[MAXTEXT];
+    char author[MAXUSERNAME+1];
+    char retweeter[MAXUSERNAME+1];
+    char content[MAXTEXT+1];
     Comment *comments;
     int likes;
     int comment_number;

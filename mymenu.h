@@ -103,8 +103,8 @@ void start_menu(){
 }
 
 void signup_menu(){
-    char username[MAX];
-    char password[MAX];
+    char username[MAXUSERNAME+1];
+    char password[MAXPASSWORD+1];
     attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Sing up Page");
     attroff(COLOR_PAIR(TITLE_COLOR));
@@ -113,7 +113,7 @@ void signup_menu(){
     curs_set(TRUE);
     do{
         move(2,0);
-        getnstr(username,MAX-1);
+        getnstr(username,MAXUSERNAME);
         if(is_valid_username(username)){
             break;
         }
@@ -133,7 +133,7 @@ void signup_menu(){
     curs_set(TRUE);
     do{
         move(4,0);
-        getnstr(password,MAX-1);
+        getnstr(password,MAXPASSWORD);
         if(is_valid_password(password)){
             break;
         }
@@ -182,7 +182,7 @@ void login_menu(){
     curs_set(TRUE);
     do{
         move(2,0);
-        getnstr(username,MAX-1);
+        getnstr(username,MAXUSERNAME);
         if(is_valid_username(username)){
             break;
         }
@@ -202,7 +202,7 @@ void login_menu(){
     curs_set(TRUE);
     do{
         move(4,0);
-        getnstr(password,MAX-1);
+        getnstr(password,MAXPASSWORD);
         if(is_valid_password(password)){
             break;
         }
@@ -371,7 +371,7 @@ void timeline_menu(){
 
 
 void search_menu(){
-    char username_search[MAX];
+    char username_search[MAXUSERNAME+1];
     clear();
     attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Search User");
@@ -381,7 +381,7 @@ void search_menu(){
     echo();
     do{
         move(2,0);
-        getnstr(username_search,MAX-1);
+        getnstr(username_search,MAXUSERNAME);
         if(is_valid_username(username_search)){
             break;
         }
@@ -852,7 +852,7 @@ void personal_area_menu(){
 }
 
 void set_bio_menu(){
-    char bio[MAX];
+    char bio[MAXBIO+1];
     attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Setting bio");
     attroff(COLOR_PAIR(TITLE_COLOR));
@@ -861,7 +861,7 @@ void set_bio_menu(){
     echo();
     do{
         move(2,0);
-        getnstr(bio,MAX-1);
+        getnstr(bio,MAXBIO);
         if(is_valid_bio(bio)){
             break;
         }
@@ -903,8 +903,8 @@ void set_bio_menu(){
 }
 
 void change_password_menu(){
-    char new_password[MAX];
-    char curr_password[MAX];
+    char new_password[MAXPASSWORD+1];
+    char curr_password[MAXPASSWORD+1];
     attron(COLOR_PAIR(TITLE_COLOR));
     mvprintw(0,0,"Changing password");
     attroff(COLOR_PAIR(TITLE_COLOR));
@@ -912,7 +912,7 @@ void change_password_menu(){
     curs_set(TRUE);
     do{
         move(2,0);
-        getnstr(curr_password,MAX-1);
+        getnstr(curr_password,MAXPASSWORD);
         if(is_valid_password(curr_password)){
             break;
         }
@@ -931,7 +931,7 @@ void change_password_menu(){
     curs_set(TRUE);
     do{
         move(4,0);
-        getnstr(new_password,MAX-1);
+        getnstr(new_password,MAXPASSWORD);
         if(is_valid_password(new_password)){
             break;
         }
@@ -983,7 +983,7 @@ void logout(){
 
 
 void send_tweet(){
-    char tweet[MAXTEXT];
+    char tweet[MAXTEXT+1];
     
     clear();
     attron(COLOR_PAIR(TITLE_COLOR));
@@ -994,7 +994,7 @@ void send_tweet(){
     curs_set(TRUE);
     do{
         move(2,0);
-        getnstr(tweet,MAXTEXT-1);
+        getnstr(tweet,MAXTEXT);
         if(is_valid_text(tweet)){
             break;
         }
@@ -1253,7 +1253,7 @@ void comment_tweet(WINDOW* win,Tweet* tweet){
     curs_set(TRUE);
     do{
         wmove(win,1,0);
-        wgetnstr(win,new_comment.content,MAXTEXT-1);
+        wgetnstr(win,new_comment.content,MAXTEXT);
         if(is_valid_text(new_comment.content)){
             break;
         }

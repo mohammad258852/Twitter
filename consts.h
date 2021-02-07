@@ -1,17 +1,20 @@
 #ifndef CONSTS
 #define CONSTS
 
-#define MAX 70
-#define MAXTEXT 350
+#define MAXUSERNAME 16
+#define MAXPASSWORD 16
+#define MAXBIO 70
+#define MAXTEXT 220
 #define MAXBUF 1024
+#define TOKENSIZE 20
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 #define IP "127.0.0.2"
 #define PORT 12345
 
-char auth[MAX];
-char username[MAX];
-char password[MAX];
+char auth[TOKENSIZE+1];
+char username[MAXUSERNAME+1];
+char password[MAXPASSWORD+1];
 int server_status = 1;
 
 enum {

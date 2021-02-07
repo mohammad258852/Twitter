@@ -8,8 +8,8 @@
 typedef
 struct __comment
 {
-    char author[MAX];
-    char content[MAXTEXT];
+    char author[MAXUSERNAME+1];
+    char content[MAXTEXT+1];
 }Comment;
 
 Comment make_comment_json(cJSON* json){

@@ -7,8 +7,8 @@
 
 typedef
 struct __user{
-    char username[MAX];
-    char bio[MAX];
+    char username[MAXUSERNAME+1];
+    char bio[MAXBIO+1];
     int followers;
     int followings;
     int following_status;

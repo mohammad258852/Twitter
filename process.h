@@ -553,7 +553,7 @@ void delete_request(int sock,const char* command){
 void retweet(int sock,const char* command){
     char tok[TOKENSIZE+1];
     int id;
-    if(scanf(command,"retweet %[^,],%d",tok,&id)!=2){
+    if(sscanf(command,"retweet %[^,],%d",tok,&id)!=2){
         send_response(sock,"Error","Bad password format");
         logout("Bad password format");
         return;

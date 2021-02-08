@@ -328,7 +328,7 @@ cJSON* make_user_for_client(const char* username,const char* client_username){
         iter->id = i->id;
         strcpy(iter->retweeter,"");
     }
-    for(TweetList* i=user.retweets;i!=NULL;i = i->next){
+    for(TweetList* i=user.retweets;i!=NULL;i = i->next,iter++){
         if(tweet_exist(i->id)){
             iter->id = i->id;
             Tweet tweet = read_tweet(i->id);

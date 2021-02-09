@@ -40,7 +40,9 @@ int  is_valid_username(const char* us);
 int  is_valid_password(const char* ps);
 int  is_valid_text(const char* tx);
 int  is_valid_bio(const char* bi);
+int  is_valid_hashtag(const char* ht);
 void retweet(int id);
+void search_tweet();
 
 
 void start_menu(){
@@ -247,6 +249,7 @@ void main_menu(){
         "Search",
         "Tweet Profile",
         "Personal area",
+        "Search Tweet",
         "Log out"
     };
 
@@ -297,6 +300,9 @@ void main_menu(){
             personal_area_menu();
             break;
         case 4:
+            search_tweet();
+            break;
+        case 5:
         default:
             logout();
             repeat = 0;
@@ -1327,10 +1333,238 @@ int is_valid_bio(const char* bi){
     return 1;
 }
 
+int is_valid_hashtag(const char* ht){
+    if(strlen(ht)==0)
+        return 0;
+    for(int i=0;ht[i]!='\0';i++){
+        if(!isalnum(ht[i]) && ht[i]!='_')
+            return 0;
+    }
+    return 1;
+}
+
 void retweet(int id){
     char* response;
     send_requestf(&response,"retweet %s,%d\n",auth,id);
     free(response);
+}
+
+void search_tweet(){
+    char hahstag[MAXHASHTAG+1];
+    clear();
+    attron(COLOR_PAIR(TITLE_COLOR));
+    mvprintw(0,0,"Search Tweet");
+    attroff(COLOR_PAIR(TITLE_COLOR));
+    mvprintw(1,0,"Type hashtag");
+    curs_set(TRUE);
+    echo();
+    do{
+        move(2,0);
+        getnstr(hahstag,MAXHASHTAG);
+        if(is_valid_hashtag(hahstag)){
+            break;
+        }
+        else{
+            attron(COLOR_PAIR(ERROR_COLOR));
+            mvprintw(3,0,"Invalid hashtag. just alphabets and numbers and _. try again");
+            attroff(COLOR_PAIR(ERROR_COLOR));
+            move(2,0);
+            clrtoeol();
+        }
+    }while(1);
+    noecho();
+    curs_set(FALSE);
+    move(3,0);
+    clrtoeol();
+    char* response;
+    send_requestf(&response,"tweet search %s,%s\n",auth,hahstag);
+    cJSON* json = cJSON_Parse(response);
+    free(response);
+    char* type = cJSON_GetObjectItem(json,"Type")->valuestring;
+
+    if(strcmp(type,"List")!=0){
+        attron(COLOR_PAIR(ERROR_COLOR));
+        mvprintw(LINES/2,4,cJSON_GetObjectItem(json,"message")->valuestring);
+        attroff(COLOR_PAIR(ERROR_COLOR));
+        move(LINES/2+1,4);
+        press_key_to_continue();
+        cJSON_Delete(json);
+        return;
+    }
+
+    cJSON* json_tweets = cJSON_GetObjectItem(json,"message");
+    int tweets_number = cJSON_GetArraySize(json_tweets);
+    Tweet* tweets = make_tweet_array_json(json_tweets);
+    cJSON_Delete(json);
+    clear();
+
+    if(tweets_number<1){
+        attron(COLOR_PAIR(ERROR_COLOR));
+        mvprintw(LINES/2 ,4,"NO new tweets :(");
+        attroff(COLOR_PAIR(ERROR_COLOR));
+        move(LINES/2+1,4);
+        press_key_to_continue();
+        free(tweets);
+        return;
+    }
+
+    //calculating windows start x y and heigh,width
+    int tweets_id_win_y , tweets_id_win_x;
+    tweets_id_win_y = 0;
+    tweets_id_win_x = 0;
+    int tweets_id_win_h , tweets_id_win_w;
+    tweets_id_win_h = 3;
+    tweets_id_win_w = COLS;
+
+    int tweet_win_y , tweet_win_x;
+    tweet_win_y = tweets_id_win_y + tweets_id_win_h;
+    tweet_win_x = 0;
+    int tweet_win_h , tweet_win_w;
+    tweet_win_h = (LINES - tweets_id_win_h - 3)/2;
+    tweet_win_w = COLS;
+
+    int comment_win_y , comment_win_x;
+    comment_win_y = tweet_win_y + tweet_win_h;
+    comment_win_x = 0;
+    int comment_win_h , comment_win_w;
+    comment_win_h = (LINES - tweets_id_win_h - 3)/2;
+    comment_win_w = COLS;
+
+
+    int help_y = LINES - 3;
+    mvprintw(help_y+0,0,"Use <LEFT><RIGHT> to change tweet");
+    mvprintw(help_y+1,0,"Use <UP><DOWN> to change comment");
+    mvprintw(help_y+2,0,"press l to like,c to comment, r to retweet,and q to quit");
+    refresh();
+    WINDOW* tweets_id_win = newwin( tweets_id_win_h,tweets_id_win_w,
+                                    tweets_id_win_y,tweets_id_win_x);
+    WINDOW* tweets_id_subwin = derwin(tweets_id_win,tweets_id_win_h-2,tweets_id_win_w-2,1,1);
+    keypad(tweets_id_win,TRUE);
+    box(tweets_id_win,0,0);
+    wrefresh(tweets_id_win);
+
+    WINDOW* tweet_win = newwin( tweet_win_h,tweet_win_w,
+                                tweet_win_y,tweet_win_x);
+    WINDOW* tweet_subwin = derwin(tweet_win,tweet_win_h-2,tweet_win_w-2,1,1);
+    keypad(tweet_win,TRUE);
+    box(tweet_win,0,0);
+    wrefresh(tweet_win);
+
+    WINDOW* comment_win = newwin(   comment_win_h,comment_win_w,
+                                    comment_win_y,comment_win_x);
+    WINDOW* comment_subwin = derwin(comment_win,comment_win_h-2,comment_win_w-2,1,1);
+    keypad(comment_win,TRUE);
+    box(comment_win,0,0);
+    wrefresh(comment_win);
+    
+    ITEM** tweets_id_items = (ITEM**)calloc(tweets_number+1,sizeof(ITEM*));
+    char** tweets_id_items_string = (char**)calloc(tweets_number,sizeof(char*));
+    for(int i=0;i<tweets_number;i++){
+        tweets_id_items_string[i] = itos(tweets[i].id);
+        tweets_id_items[i] = new_item(tweets_id_items_string[i],"");
+    }
+    MENU* tweets_id_menu = new_menu(tweets_id_items);
+    menu_opts_off(tweets_id_menu, O_SHOWDESC);
+    set_menu_win(tweets_id_menu,tweets_id_win);
+    set_menu_sub(tweets_id_menu,tweets_id_subwin);
+    int each_option_len = tweets_id_menu->itemlen+tweets_id_menu->desclen+tweets_id_menu->marklen;
+    set_menu_format(tweets_id_menu,1,(tweets_id_win_w-2)/(each_option_len));
+    post_menu(tweets_id_menu);
+    wrefresh(tweets_id_win);
+
+    int current_tweet = 0;
+    int current_comment = 0;
+    int tweet_change = 0;
+    int comment_change = 0;
+    int continue_runnig = 1;
+    refresh();
+    wprint_tweet(tweet_subwin,tweets+current_tweet);
+    wprint_comment( comment_subwin,&tweets[current_tweet],current_comment);
+    int ch=1;
+    while(continue_runnig && (ch=wgetch(tweets_id_win))){
+        switch (ch)
+        {
+        case KEY_RIGHT:
+            if(menu_driver(tweets_id_menu,REQ_NEXT_ITEM)==E_OK){
+                tweet_change = 1;
+                comment_change = 1;
+                current_comment = 0;
+            }
+            else{
+                beep();
+            }
+            break;
+        case KEY_LEFT:
+            if(menu_driver(tweets_id_menu,REQ_PREV_ITEM)==E_OK){
+                tweet_change = 1;
+                comment_change = 1;
+                current_comment = 0;
+            }
+            else{
+                beep();
+            }
+            break;
+        case KEY_UP:
+            if(current_comment-1>=0){
+                current_comment--;
+                comment_change = 1;
+            }
+            else{
+                beep();
+            }
+            break;
+        case KEY_DOWN:
+            if(current_comment+1<tweets[current_tweet].comment_number){
+                current_comment++;
+                comment_change = 1;
+            }
+            else{
+                beep();
+            }
+            break;
+        case 'l':
+            like_tweet(tweets+current_tweet);
+            tweet_change = 1;
+            break;
+        case 'c':
+            comment_tweet(comment_subwin,tweets+current_tweet);
+            comment_change = 1;
+            tweet_change = 1;
+            break;
+        case 'q':
+            continue_runnig = 0;
+            break;
+        case 'r':
+            retweet(tweets[current_tweet].id);
+            break;
+        }
+        if(tweet_change==1){
+            tweet_change = 0;
+            current_tweet = item_index(current_item(tweets_id_menu));
+            wprint_tweet(tweet_subwin,tweets+current_tweet);
+        }
+        if(comment_change){
+            comment_change = 0;
+            wprint_comment( comment_subwin,&tweets[current_tweet],current_comment);
+        }
+    }
+    for(int i=0;i<tweets_number;i++){
+        free_tweet(tweets[i]);
+    }
+    for(int i=0;i<tweets_number;i++){
+        free_item(tweets_id_items[i]);
+    }
+    free_menu(tweets_id_menu);
+    free(tweets_id_items);
+
+    free(tweets);
+
+    delwin(tweets_id_subwin);
+    delwin(tweets_id_win);
+    delwin(tweet_subwin);
+    delwin(tweet_win);
+    delwin(comment_subwin);
+    delwin(comment_win);
 }
 
 #endif

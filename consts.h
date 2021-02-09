@@ -6,6 +6,7 @@
 #define MAXBIO 70
 #define MAXTEXT 220
 #define MAXBUF 1024
+#define MAXHASHTAG 30
 #define TOKENSIZE 20
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 

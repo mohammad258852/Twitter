@@ -10,6 +10,7 @@
 #include"utility.h"
 #include"user.h"
 #include"token.h"
+#include"hashtag.h"
 
 #define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
 
@@ -29,6 +30,7 @@ void profile(int,const char*);
 void change_password(int,const char*);
 void delete_request(int,const char*);
 void retweet(int,const char*);
+void search_tweet(int,const char*);
 
 void process(int sock){
     char* request;
@@ -38,12 +40,14 @@ void process(int sock){
                                 "refresh","logout","like",
                                 "comment","search","follow",
                                 "unfollow","set bio","profile",
-                                "change password","delete","retweet"};
+                                "change password","delete","retweet",
+                                "tweet search"};
     void (*fun[])(int,const char*) = {signup,login,send_tweet,
                                     refresh,loggout,like,
                                     comment,search,follow,
                                     unfollow,set_bio,profile,
-                                    change_password,delete_request,retweet};
+                                    change_password,delete_request,retweet,
+                                    search_tweet};
     int commands_len = ARRAYSIZE(commands);
     int command_found = 0;
     for(int i=0;i<commands_len;i++){
@@ -82,6 +86,18 @@ int isvalid_text_char(char t){
     if(t=='\0' || t=='\n')
         return 0;
     return 1;
+}
+
+int isvalid_hashtag_char(char t){
+    if(t>='a' && t<='z')
+        return 1;
+    if(t>='A' && t<='Z')
+        return 1;
+    if(t>='0' && t<='9')
+        return 1;
+    if(t=='_')
+        return 1;
+    return 0;
 }
 
 int isvalid_username(char* us){
@@ -134,6 +150,19 @@ int isvalid_text(char* text){
             return 0;
     }
     if(i==0 || i>MAXTEX)
+        return 0;
+    return 1;
+}
+
+int isvalid_hashtag(char* ht){
+    int i;
+    for(i=0;ht[i]!='\0';i++){
+        if(i>=MAXHASHTAG)
+            return 0;
+        if(!isvalid_hashtag_char(ht[i]))
+            return 0;
+    }
+    if(i==0 || i>MAXHASHTAG)
         return 0;
     return 1;
 }
@@ -582,6 +611,31 @@ void retweet(int sock,const char* command){
     add_retweet_to_user(token->username,id);
     send_response(sock,"Successful","Tweet retweeted");
     logoutf("user %s retweets tweet %d",token->username,id);
+}
+
+void search_tweet(int sock,const char* command){
+    char hashtag[MAXHASHTAG+1];
+    char tok[TOKENSIZE+1];
+    if(sscanf(command,"tweet search %[^,],%[^\n]",tok,hashtag)!=2){
+        send_response(sock,"Error","Bad request format");
+        logout("Bad request format");
+        return;
+    }
+    if(!isvalid_hashtag(hashtag)){
+        send_response(sock,"Error","Bad hashtag format");
+        logout("Bad hashtag format");
+        return;
+    }
+    Token* token = validate_token(tok);
+    if(token==NULL){
+        send_response(sock,"Error","Invalid token");
+        logout("Invalid token");
+        return;
+    }
+    cJSON* json = tweets_with_hashtag(hashtag);
+    send_response_json(sock,"List",json);
+    logoutf("Tweets with hashtag %s sent",hashtag);
+    cJSON_Delete(json);
 }
 
 #endif

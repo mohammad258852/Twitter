@@ -16,11 +16,14 @@
 #define MAXBIO 70
 #define MAXTEX 220
 #define MAXFILENAMESIZE (MAXUSERNAME + 100)
+#define MAXHASHTAG 30
+#define MAXHASHTAGS "30"
 
 #define USERSFILEPATH "Resource/Users/"
 #define TWEETPATH "Resource/Tweets/"
 #define TWEETREADPATH "Resource/TweetsRead/"
 #define TWEETLIKEPATH "Resource/TweetsLike/"
 #define RETWEETPATH "Resource/Retweets/"
+#define HASHTAGSPATH "Resource/Hashtags/"
 
 #endif  

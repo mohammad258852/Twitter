@@ -156,6 +156,8 @@ int add_tweet(const char* username,const char* content){
         free_tweet(&tmp);
         return 0;
     }
+    void extract_hashtags(const char*,int);
+    extract_hashtags(content,tmp.id);
     return tmp.id;
 }
 

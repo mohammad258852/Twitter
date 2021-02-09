@@ -9,6 +9,7 @@
 #include"userlist.h"
 #include"tweetlist.h"
 #include"idlist.h"
+#include"hashtag.h"
 
 typedef struct
 {
@@ -416,6 +417,7 @@ void delete_tweet(const char* username,int id){
         fclose(file);
     }
     remove(path);
+    remove_id_from_all_hashtags(id);
 }
 
 int is_user_own_tweet(const char* username,int id){

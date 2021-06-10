@@ -10,14 +10,18 @@ git clone https://github.com/mohammad258852/Twitter
 cd Twitter
 ```
 ### run server
+```bash
 cd server
 make main
 ./main
+```
 
 ### run client
+```bash
 cd client
 make main
 ./main
+```
 
 ## feature
 1.  send and get tweets

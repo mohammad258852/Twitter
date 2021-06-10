@@ -1,0 +1,78 @@
+#ifndef MYSOCKET
+#define MYSOCKET
+
+#include<sys/socket.h>
+#include<arpa/inet.h> 
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include <string.h>
+#include <stdarg.h>
+#include "consts.h"
+
+int make_socket(const char ip[],int port){
+    int sock;
+    struct sockaddr_in address;
+    sock = socket(AF_INET,SOCK_STREAM,0);
+    if(sock<0){
+        return 0;
+    }
+    address.sin_family = AF_INET;
+    address.sin_port = htons(port);
+    
+    int result;
+    result = inet_pton(AF_INET,ip,&address.sin_addr);
+    if(result<=0){
+        printf("\nInvalid Ip address\n");
+        return 0;
+    }
+
+    result = connect(sock,(struct sockaddr*)&address,sizeof(address));
+    if(result<0){
+        printf("\nConnection Failed\n");
+        return 0;
+    }
+
+    return sock;
+}
+
+
+void send_request(const char* request,size_t request_size,char** respons){
+    int server_socket = make_socket(IP,PORT);
+    if(server_socket == 0){
+        printf("\nError while making socket\n");
+        strcpy(*respons,"ERROR");
+        server_status = 0;
+        exit(1);
+        return;
+    }
+
+    send(server_socket,request,request_size,0);
+    char buffer[MAXBUF];
+    *respons = calloc(1,1);
+    int total_bytes = 0;
+    while(1){
+        int read_bytes = read(server_socket,buffer,MAXBUF);
+        if(read_bytes<=0){
+            break;
+        }
+        total_bytes += read_bytes;
+        *respons = realloc(*respons,total_bytes+1);
+        strncat(*respons,buffer,read_bytes);
+    }
+    close(server_socket);
+}
+
+void send_requestf(char** respons,const char* format,...){
+    va_list ap;
+    va_start(ap,format);
+    size_t request_size = vsnprintf(NULL,0,format,ap);
+    char* request = malloc(request_size + 1);
+    va_end(ap);
+    va_start(ap,format);
+    vsprintf(request,format,ap);
+    send_request(request,request_size,respons);
+    free(request);
+    va_end(ap);
+}
+#endif
